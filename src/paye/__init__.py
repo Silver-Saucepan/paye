@@ -1,1 +1,1 @@
-import paye
+from paye import *
