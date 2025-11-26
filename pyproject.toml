@@ -26,3 +26,10 @@ Issues = "https://github.com/Silver-Saucepan/paye/issues"
 [build-system]
 requires = ["hatchling >= 1.26"]
 build-backend = "hatchling.build"
+
+[tool.ruff]
+line-length = 100
+
+[tool.ruff.format]
+# Don't mess with quotes
+quote-style = "preserve"
