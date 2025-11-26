@@ -24,12 +24,13 @@ Currently not implemented:
 * Scottish tax codes
 * Welsh tax codes
 """
-import datetime
-import re
+
 import csv
-from decimal import Decimal, ROUND_CEILING, ROUND_FLOOR
-from dataclasses import dataclass, field
+import datetime
 import os.path
+import re
+from dataclasses import dataclass, field
+from decimal import ROUND_CEILING, ROUND_FLOOR, Decimal
 
 from google.auth.transport.requests import Request
 from google.oauth2.credentials import Credentials
@@ -100,11 +101,9 @@ class TaxCode:
                     self.basis,
                 ) = r.groups()
             if self.nation == 'C':
-                raise ValueError(
-                    "Welsh tax codes not currently supported")
+                raise ValueError("Welsh tax codes not currently supported")
             if self.nation == 'S':
-                raise ValueError(
-                    "Scottish tax codes not currently supported")
+                raise ValueError("Scottish tax codes not currently supported")
 
     def __str__(self):
         return str(
@@ -176,8 +175,7 @@ class TaxCode:
             # at the end of 4.3.1
             q, r = divmod(numeric - 1, Decimal('500'))
             r += 1
-            free_pay_r = ((r * 10 + 9) / 12).quantize(
-                Decimal('0.01'), rounding=ROUND_CEILING)
+            free_pay_r = ((r * 10 + 9) / 12).quantize(Decimal('0.01'), rounding=ROUND_CEILING)
             free_pay_q = q * Decimal('416.67')
             free_pay = free_pay_q + free_pay_r
             if self.prefix == 'K':
@@ -268,7 +266,7 @@ def uk_tax_period_start_date(tax_year: int, tax_period: int) -> datetime.date:
     """Return the start date of the tax_period in tax_year
     tax_periods in the range 1 to 12
     """
-    q, r = divmod(tax_period+3, 12)
+    q, r = divmod(tax_period + 3, 12)
     d = datetime.date(year=tax_year + q, month=r, day=6)
     return d
 
@@ -287,9 +285,9 @@ def str_to_decimal(amount: str) -> Decimal:
 
 # noinspection PyPep8Naming
 def __taxable_pay_to_date(
-        period: int,
-        code: TaxCode,
-        cumulative_pay_to_date: Decimal,
+    period: int,
+    code: TaxCode,
+    cumulative_pay_to_date: Decimal,
 ) -> Decimal:
     # pylint: disable=invalid-name
     """Stage 2: Calculation of Taxable Pay to date (section 4.3)."""
@@ -309,17 +307,16 @@ def __taxable_pay_to_date(
 
 # noinspection PyPep8Naming
 def __tax_due_to_date(
-        year: int,
-        period: int,
-        code: TaxCode,
-        taxable_pay_to_date: Decimal,
+    year: int,
+    period: int,
+    code: TaxCode,
+    taxable_pay_to_date: Decimal,
 ) -> Decimal:
     """Stage 3: Calculation of tax due to date (section 4.4)."""
     # pylint: disable=invalid-name
     # 4.4.4 round down to nearest pound
     # Added Decimal('0.00') to restore two decimal points
-    T_n = taxable_pay_to_date.quantize(
-        Decimal('0'), rounding=ROUND_FLOOR) + Decimal('0.00')
+    T_n = taxable_pay_to_date.quantize(Decimal('0'), rounding=ROUND_FLOOR) + Decimal('0.00')
 
     if code.is_nt():
         L_n = Decimal('0.00')
@@ -340,8 +337,7 @@ def __tax_due_to_date(
         c = [C * period / 12 for C in CONSTANTS[year]['C']]
 
         # Rounded threshold taxes, Definition 10
-        v = [item.quantize(Decimal('1'), rounding=ROUND_CEILING) for
-             item in c]
+        v = [item.quantize(Decimal('1'), rounding=ROUND_CEILING) for item in c]
 
         # Threshold taxes, Definition 11
         k = [K * period / 12 for K in CONSTANTS[year]['K']]
@@ -366,13 +362,13 @@ def __tax_due_to_date(
 
 # noinspection PyPep8Naming
 def __tax_due_cumulative(
-        year: int,
-        period: int,
-        code: TaxCode,
-        p_n: Decimal,
-        P_n: Decimal,
-        L_n_1: Decimal,
-        pbik: Decimal,
+    year: int,
+    period: int,
+    code: TaxCode,
+    p_n: Decimal,
+    P_n: Decimal,
+    L_n_1: Decimal,
+    pbik: Decimal,
 ) -> Decimal:
     """
     Calculate the income tax due for cumulative suffix codes and
@@ -384,15 +380,10 @@ def __tax_due_cumulative(
     # to the calling function which provides P_n
 
     # 4.3 Stage 2 Calculation of Taxable Pay to date U_n
-    U_n = __taxable_pay_to_date(period=period,
-                                code=code,
-                                cumulative_pay_to_date=P_n)
+    U_n = __taxable_pay_to_date(period=period, code=code, cumulative_pay_to_date=P_n)
 
     # 4.4 Stage 3 Calculation of tax due to date L_n
-    L_n = __tax_due_to_date(period=period,
-                            code=code,
-                            taxable_pay_to_date=U_n,
-                            year=year)
+    L_n = __tax_due_to_date(period=period, code=code, taxable_pay_to_date=U_n, year=year)
 
     # 4.5 Stage 4 Calculation of Tax Deduction or Refund
     maxrate = CONSTANTS[year]['M'] * (p_n - pbik)
@@ -406,10 +397,10 @@ def __tax_due_cumulative(
 
 # noinspection PyPep8Naming
 def __tax_due_month1(
-        year: int,
-        code: TaxCode,
-        p_n: Decimal,
-        pbik: Decimal,
+    year: int,
+    code: TaxCode,
+    p_n: Decimal,
+    pbik: Decimal,
 ) -> Decimal:
     """
     Calculate the tax due on a 'Month 1' basis.
@@ -423,10 +414,7 @@ def __tax_due_month1(
     U_n = p_n - code.free_pay_m1()
 
     # Stage 2: Tax due, section 8.3
-    L_n = __tax_due_to_date(year=year,
-                            period=1,
-                            code=code,
-                            taxable_pay_to_date=U_n)
+    L_n = __tax_due_to_date(year=year, period=1, code=code, taxable_pay_to_date=U_n)
     l_n = L_n - 0
     maxrate = CONSTANTS[year]['M'] * (p_n - pbik)
     l_n = min(
@@ -436,10 +424,7 @@ def __tax_due_month1(
     return l_n
 
 
-def tax_due(
-        payslip: Payslip,
-        tax_to_date: Decimal
-) -> Decimal | None:
+def tax_due(payslip: Payslip, tax_to_date: Decimal) -> Decimal | None:
     """Calculate the income tax due for employees paid monthly
     :param payslip: populated with year, period, code, gross, gross to date and
     benefits in kind if any
@@ -455,8 +440,7 @@ def tax_due(
     if payslip.total_gross.is_nan():
         return Decimal('NaN')
     if payslip.year not in CONSTANTS:
-        raise ValueError(
-            f"HMRC constants for year {payslip.year} is missing")
+        raise ValueError(f"HMRC constants for year {payslip.year} is missing")
     if payslip.code.is_cumulative():
         return __tax_due_cumulative(
             year=payslip.year,
@@ -477,7 +461,7 @@ def tax_due(
 
 
 def constants_from_csv(
-        file_name: str = 'Income Prognosticator - HMRC & ONS Parameters.csv'
+    file_name: str = 'Income Prognosticator - HMRC & ONS Parameters.csv',
 ) -> dict[int, dict]:
     """
     Obtains the HMRC constants by parsing a CSV file
@@ -487,12 +471,24 @@ def constants_from_csv(
     """
     consts: dict[int, dict] = {}
     fieldnames = (
-        'Tax year', 'B_1', 'B_2', 'B_3', 'C_1', 'C_2', 'C_3',
-        'K_1', 'K_2', 'K_3', 'R_1', 'R_2', 'R_3', 'R_4', 'G',
-        'M'
+        'Tax year',
+        'B_1',
+        'B_2',
+        'B_3',
+        'C_1',
+        'C_2',
+        'C_3',
+        'K_1',
+        'K_2',
+        'K_3',
+        'R_1',
+        'R_2',
+        'R_3',
+        'R_4',
+        'G',
+        'M',
     )
-    with open(file_name,
-              'r', encoding='utf-8') as csvfile:
+    with open(file_name, 'r', encoding='utf-8') as csvfile:
         reader = csv.DictReader(csvfile, fieldnames=fieldnames)
         for _ in range(3):
             # Skip the header rows
@@ -548,17 +544,14 @@ def constants_from_google_sheets():
     # and is created automatically when the authorization flow completes
     # for the first time.
     if os.path.exists("token.json"):
-        creds = Credentials.from_authorized_user_file(
-            "token.json", SCOPES)
+        creds = Credentials.from_authorized_user_file("token.json", SCOPES)
     # If there are no (valid) credentials available,
     # let the user log in.
     if not creds or not creds.valid:
         if creds and creds.expired and creds.refresh_token:
             creds.refresh(Request())
         else:
-            flow = InstalledAppFlow.from_client_secrets_file(
-                "credentials.json", SCOPES
-            )
+            flow = InstalledAppFlow.from_client_secrets_file("credentials.json", SCOPES)
             creds = flow.run_local_server(port=0)
         # Save the credentials for the next run
         with open("token.json", "w") as token:
@@ -569,11 +562,7 @@ def constants_from_google_sheets():
 
         # Call the Sheets API
         sheet = service.spreadsheets()
-        result = (
-            sheet.values()
-            .get(spreadsheetId=PROGNOSTICATOR_ID, range=HMRC_DATA)
-            .execute()
-        )
+        result = sheet.values().get(spreadsheetId=PROGNOSTICATOR_ID, range=HMRC_DATA).execute()
         values = result.get("values", [])
 
         if not values:
