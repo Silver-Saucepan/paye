@@ -13,6 +13,14 @@ This package partially implements the algorithms defined by HMRC
 in their "SPECIFICATION FOR PAYE TAX TABLE ROUTINES" Version 23,
 dated January 2025
 
+# HMRC Constants
+The algorithms use a set of constants that are dependent on tax year
+and defined in the Specification.
+
+This package reads the constants from a Google Spreadsheet which needs 
+to be updated for each new tax year.
+
+
 # Not Implemented
 1. Weekly pay
 2. Scottish and Welsh tax codes
