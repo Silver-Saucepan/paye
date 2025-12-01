@@ -41,7 +41,6 @@ from googleapiclient.errors import HttpError
 # If modifying these scopes, delete the file token.json.
 SCOPES = ["https://www.googleapis.com/auth/spreadsheets.readonly"]
 
-# noinspection SpellCheckingInspection
 PROGNOSTICATOR_ID = "180xcr-5WQ_6W4pwSpbxTkwydLfdQUN5nUqut6PufO0E"
 HMRC_DATA = "HMRC & ONS Parameters!A4:P"
 CONSTANTS = {}
@@ -283,7 +282,6 @@ def str_to_decimal(amount: str) -> Decimal:
     return Decimal(re.sub(r'[^+\-.0-9]', '', amount))
 
 
-# noinspection PyPep8Naming
 def __taxable_pay_to_date(
     period: int,
     code: TaxCode,
@@ -305,7 +303,6 @@ def __taxable_pay_to_date(
     return U_n
 
 
-# noinspection PyPep8Naming
 def __tax_due_to_date(
     year: int,
     period: int,
@@ -360,7 +357,6 @@ def __tax_due_to_date(
     return L_n
 
 
-# noinspection PyPep8Naming
 def __tax_due_cumulative(
     year: int,
     period: int,
@@ -395,7 +391,6 @@ def __tax_due_cumulative(
     return l_n
 
 
-# noinspection PyPep8Naming
 def __tax_due_month1(
     year: int,
     code: TaxCode,
