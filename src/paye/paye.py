@@ -134,10 +134,8 @@ class TaxCode:
         character as an integer which says which rate to use.
         Otherwise, return None
         """
-        if self.prefix == 'D':
-            if self.numeric_part:
-                return int(self.numeric_part)
-        return None
+        if self.prefix == 'D' and self.numeric_part:
+            return int(self.numeric_part)
 
     def is_month1(self) -> bool:
         """Return True if the code indicates a 'Month 1' code."""
@@ -156,10 +154,7 @@ class TaxCode:
         Implementation of algorithm specified in section 4.3.1 of
         "HMRC Specification for PAYE Tax Table Routines".
         """
-        if self.numeric_part:
-            numeric = Decimal(self.numeric_part)
-        else:
-            numeric = Decimal('0.00')
+        numeric = Decimal(self.numeric_part) if self.numeric_part else Decimal('0.00')
 
         if self.is_br():
             # 5.2 Whole of cumulative pay is to be taxed at basic rate
