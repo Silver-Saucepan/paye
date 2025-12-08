@@ -31,6 +31,7 @@ import os.path
 import re
 from dataclasses import dataclass, field
 from decimal import ROUND_CEILING, ROUND_FLOOR, Decimal
+from typing import Final, final
 
 from google.auth.transport.requests import Request
 from google.oauth2.credentials import Credentials
@@ -39,13 +40,15 @@ from googleapiclient.discovery import build
 from googleapiclient.errors import HttpError
 
 # If modifying these scopes, delete the file token.json.
-SCOPES = ["https://www.googleapis.com/auth/spreadsheets.readonly"]
+SCOPES: Final[list[str]] = ["https://www.googleapis.com/auth/spreadsheets.readonly"]
 
-PROGNOSTICATOR_ID = "180xcr-5WQ_6W4pwSpbxTkwydLfdQUN5nUqut6PufO0E"
-HMRC_DATA = "HMRC & ONS Parameters!A4:P"
+PROGNOSTICATOR_ID: Final[str] = "180xcr-5WQ_6W4pwSpbxTkwydLfdQUN5nUqut6PufO0E"
+HMRC_DATA: Final[str] = "HMRC & ONS Parameters!A4:P"
 CONSTANTS = {}
 
-TAX_CODE_REGEX = r'^([SC])?(BR|NT|0T|D|K)?(\d*)([LMNTPY])?[\s/]*(.*)'
+TAX_CODE_REGEX: Final[str] = (
+    r'^(?P<country>[SC])?(?P<prefix>BR|NT|0T|D|K)?(?P<numeric>\d*)(?P<suffix>[LMNTPY])?[\s/]*(?P<basis>.*)'
+)
 # Meaning of the groups:
 # Group 1: Indicates if Scottish or Welsh rules apply
 # Group 2: The Prefix
@@ -64,9 +67,10 @@ TAX_CODE_REGEX = r'^([SC])?(BR|NT|0T|D|K)?(\d*)([LMNTPY])?[\s/]*(.*)'
 #   Y = Disused?
 # Group 5: The basis (cumulative vs week 1/month 1) identified by the following codes
 
-MONTH_1_BASIS_CODES = ('1', '(M1)', 'X')
+MONTH_1_BASIS_CODES: Final[tuple] = ('1', '(M1)', 'X')
 
 
+@final
 class TaxCode:
     """
     Attributes and methods for holding and interrogating HMRC tax codes.
