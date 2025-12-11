@@ -90,7 +90,14 @@ class TaxCode:
     basis: str | None
 
     def __init__(self, code: str) -> None:
-        """Parse a Tax Code into its component parts and check for unsupported features."""
+        """Parse a tax code into its component parts and check for unsupported features
+
+        Args:
+            code: The tax code as a string
+
+        Raises:
+            NotImplementedError: If the tax code indicates features that are not implemented are required
+        """
         self.code = code.strip()
         if self.code:
             p = re.compile(TAX_CODE_REGEX)
@@ -132,11 +139,10 @@ class TaxCode:
         return self.code == '#N/A'
 
     def d_index(self) -> int | None:
-        """
-        If the code prefix is 'D' indicating all income is to be taxed
-        at the Higher or Additional tax rate, return the following
-        character as an integer which says which rate to use.
-        Otherwise, return None
+        """The tax code indicates all income is subject to Higher or Additional rate tax
+
+        Returns:
+            An integer that acts as a pointer to the relevant tax rate or None if not applicable
         """
         if self.prefix == 'D' and self.numeric_part:
             return int(self.numeric_part)
