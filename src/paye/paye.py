@@ -111,9 +111,9 @@ class TaxCode:
                     self.basis,
                 ) = r.groups()
             if self.nation == 'C':
-                raise ValueError("Welsh tax codes not currently supported")
+                raise NotImplementedError("Welsh tax codes not currently implemented")
             if self.nation == 'S':
-                raise ValueError("Scottish tax codes not currently supported")
+                raise NotImplementedError("Scottish tax codes not currently implemented")
 
     def __str__(self):
         return str(
