@@ -1,5 +1,4 @@
-"""
-A partial implementation of PAYE income tax rules for England.
+"""A partial implementation of PAYE income tax rules for England.
 
 In the UK, employees and pensioners usually pay their income tax in
 monthly or weekly installments deducted automatically from their pay
@@ -267,8 +266,14 @@ class Payslip:
 
 
 def uk_tax_period_start_date(tax_year: int, tax_period: int) -> datetime.date:
-    """Return the start date of the tax_period in tax_year
-    tax_periods in the range 1 to 12
+    """Return the start date of the given tax period in the given tax year
+
+    Args:
+        tax_year: The year in which the tax year starts
+        tax_period: The tax period number in the range 1 to 12
+
+    Returns:
+        The start date of the tax period
     """
     q, r = divmod(tax_period + 3, 12)
     d = datetime.date(year=tax_year + q, month=r, day=6)
@@ -276,11 +281,15 @@ def uk_tax_period_start_date(tax_year: int, tax_period: int) -> datetime.date:
 
 
 def str_to_decimal(amount: str) -> Decimal:
-    """
-    Remove characters from 'amount' that are not allowed in the Decimal
-    constructor and return the result as a Decimal. Note: does not fully
-    implement the spec at:
-    https://docs.python.org/3/library/decimal.html#decimal.Decimal
+    """Convert a string to a Decimal by removing unsupported characters
+
+    Note: only partial implements the spec at https://docs.python.org/3/library/decimal.html#decimal.Decimal
+
+    Args:
+        amount: The amount represented as a string
+
+    Returns:
+        The amount as a Decimal
     """
     if amount == '#N/A':
         return Decimal('NaN')
@@ -292,7 +301,6 @@ def __taxable_pay_to_date(
     code: TaxCode,
     cumulative_pay_to_date: Decimal,
 ) -> Decimal:
-    # pylint: disable=invalid-name
     """Stage 2: Calculation of Taxable Pay to date (section 4.3)."""
     if code.is_nt():
         U_n = cumulative_pay_to_date
@@ -315,7 +323,6 @@ def __tax_due_to_date(
     taxable_pay_to_date: Decimal,
 ) -> Decimal:
     """Stage 3: Calculation of tax due to date (section 4.4)."""
-    # pylint: disable=invalid-name
     # 4.4.4 round down to nearest pound
     # Added Decimal('0.00') to restore two decimal points
     T_n = taxable_pay_to_date.quantize(Decimal('0'), rounding=ROUND_FLOOR) + Decimal('0.00')
@@ -330,8 +337,7 @@ def __tax_due_to_date(
         rate_pointer = CONSTANTS[year]['G']
         L_n = T_n * CONSTANTS[year]['R'][rate_pointer]
     elif code.d_index() is not None:
-        # Section 6: Whole of taxable pay taxed at Higher
-        # or Additional rate
+        # Section 6: Whole of taxable pay taxed at Higher or Additional rate
         rate_pointer = CONSTANTS[year]['G'] + 1 + code.d_index()
         L_n = T_n * CONSTANTS[year]['R'][rate_pointer]
     else:
@@ -371,12 +377,7 @@ def __tax_due_cumulative(
     L_n_1: Decimal,
     pbik: Decimal,
 ) -> Decimal:
-    """
-    Calculate the income tax due for cumulative suffix codes and
-    cumulative prefix k, - employees paid monthly.
-    """
-    # pylint: disable=invalid-name
-
+    """Calculate the income tax due for cumulative suffix codes and cumulative prefix k, - employees paid monthly."""
     # 4.2 Stage 1 Calculation of Cumulative Pay to date is delegated
     # to the calling function which provides P_n
 
@@ -402,14 +403,12 @@ def __tax_due_month1(
     p_n: Decimal,
     pbik: Decimal,
 ) -> Decimal:
-    """
-    Calculate the tax due on a 'Month 1' basis.
+    """Calculate the tax due on a 'Month 1' basis.
 
     Each payment is treated IN ISOLATION, as if it were the first
     payment of the Income Tax year to be taxed on a normal suffix or
     prefix K code.
     """
-    # pylint: disable=invalid-name
     # Stage 1: Taxable pay for the month, section 8.2
     U_n = p_n - code.free_pay_m1()
 
@@ -425,14 +424,18 @@ def __tax_due_month1(
 
 
 def tax_due(payslip: Payslip, tax_to_date: Decimal) -> Decimal | None:
-    """Calculate the income tax due for employees paid monthly
-    :param payslip: populated with year, period, code, gross, gross to date and
-    benefits in kind if any
-    :param tax_to_date: Income tax paid up to, but not including, this payslip
-    :returns: Income tax due for the tax period
-    :raises: ValueError if HMRC constants aren't available
+    """Calculate the tax due for employees paid monthly
+
+    Args:
+        payslip: Populated with year, period, code, gross, gross to date and any benefits in kind
+        tax_to_date: Income tax already paid in periods up to but not including this payslip
+
+    Returns:
+        Income tax due for this tax period
+
+    Raises:
+        ValueError: If the HMRC constants are not available for the tax year
     """
-    # pylint: disable=invalid-name
     global CONSTANTS
     if not CONSTANTS:
         CONSTANTS = constants_from_google_sheets()
@@ -463,11 +466,9 @@ def tax_due(payslip: Payslip, tax_to_date: Decimal) -> Decimal | None:
 def constants_from_csv(
     file_name: str = 'Income Prognosticator - HMRC & ONS Parameters.csv',
 ) -> dict[int, dict]:
-    """
-    Obtains the HMRC constants by parsing a CSV file
+    """Obtains the HMRC constants by parsing a CSV file
 
-    As obtained by downloading from my Income Prognosticator Google
-    spreadsheet into the active directory.
+    As obtained by downloading from my Income Prognosticator Google spreadsheet into the active directory.
     """
     consts: dict[int, dict] = {}
     fieldnames = (
@@ -532,11 +533,7 @@ def constants_from_csv(
 
 
 def constants_from_google_sheets():
-    """
-    Obtains the HMRC constants directly from Google Sheets
-
-    From my Income Prognosticator spreadsheet using the Sheets API.
-    """
+    """Obtains the HMRC constants directly from my Income Prognosticator spreadsheet using the Sheets API."""
     consts: dict[int, dict] = {}
 
     creds = None
