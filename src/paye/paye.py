@@ -423,7 +423,7 @@ def __tax_due_month1(
     return l_n
 
 
-def tax_due(payslip: Payslip, tax_to_date: Decimal) -> Decimal | None:
+def tax_due(payslip: Payslip, tax_to_date: Decimal) -> Decimal:
     """Calculate the tax due for employees paid monthly
 
     Args:
