@@ -231,7 +231,7 @@ class Payslip:
     @basic_pay.setter
     def basic_pay(self, value: Decimal) -> None:
         self._basic_pay = value
-        self.total_gross = self.basic_pay + sum(self.pay_adjustments)
+        self.total_gross = self._basic_pay + sum(self._pay_adjustments)
         self.net_pay = self.total_gross - self.total_deductions
 
     @property
@@ -241,7 +241,7 @@ class Payslip:
     @pay_adjustments.setter
     def pay_adjustments(self, value: list[Decimal]) -> None:
         self._pay_adjustments = value
-        self.total_gross = self.basic_pay + sum(self.pay_adjustments)
+        self.total_gross = self._basic_pay + sum(self._pay_adjustments)
         self.net_pay = self.total_gross - self.total_deductions
 
     @property
@@ -251,7 +251,7 @@ class Payslip:
     @income_tax.setter
     def income_tax(self, value: Decimal) -> None:
         self._income_tax = value
-        self.total_deductions = self.income_tax + sum(self.other_deductions)
+        self.total_deductions = self._income_tax + sum(self._other_deductions)
         self.net_pay = self.total_gross - self.total_deductions
 
     @property
@@ -261,7 +261,7 @@ class Payslip:
     @other_deductions.setter
     def other_deductions(self, value: list[Decimal]):
         self._other_deductions = value
-        self.total_deductions = self.income_tax + sum(self.other_deductions)
+        self.total_deductions = self._income_tax + sum(self._other_deductions)
         self.net_pay = self.total_gross - self.total_deductions
 
 
