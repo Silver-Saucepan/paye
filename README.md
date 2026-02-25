@@ -1,8 +1,9 @@
 # PAYE
+
 Partial implementation of UK Income Tax Pay-As-You-Earn algorithms
 
 In the UK, many employees and pensioners pay income tax in weekly
-or monthly installments as a deduction on their payslip under a 
+or monthly installments as a deduction on their payslip under a
 system known as Pay-As-You-Earn or PAYE.
 
 In this system, His/Her Majesty's Revenue and Customs (HMRC) gives
@@ -13,14 +14,15 @@ This package partially implements the algorithms defined by HMRC
 in their "SPECIFICATION FOR PAYE TAX TABLE ROUTINES" Version 23,
 dated January 2025
 
-# HMRC Constants
+## HMRC Constants
+
 The algorithms use a set of constants that are dependent on tax year
 and defined in the Specification.
 
-This package reads the constants from a Google Spreadsheet which needs 
+This package reads the constants from a Google Spreadsheet which needs
 to be updated for each new tax year.
 
+## Not Implemented
 
-# Not Implemented
 1. Weekly pay
 2. Scottish and Welsh tax codes
