@@ -27,11 +27,12 @@ Currently not implemented:
 import csv
 import datetime
 import os.path
+import pprint
 import re
 import tomllib
 from dataclasses import dataclass, field
 from decimal import ROUND_CEILING, ROUND_FLOOR, Decimal
-from typing import Final, final
+from typing import Final, final, Any
 
 from google.auth.transport.requests import Request
 from google.oauth2.credentials import Credentials
@@ -66,7 +67,7 @@ TAX_CODE_REGEX: Final[str] = (
 #   Y = Disused?
 # Group 5: The basis (cumulative vs week 1/month 1) identified by the following codes
 
-MONTH_1_BASIS_CODES: Final[tuple] = ('1', '(M1)', 'X')
+MONTH_1_BASIS_CODES: Final[tuple] = ('1', '(M1)', 'X', 'WM1')
 
 
 @final
@@ -211,10 +212,10 @@ class Payslip:
     payer_name: str
     year: int
     period: int
-    pay_date: datetime.date
     code: TaxCode
     pay_to_date: Decimal
     tax_to_date: Decimal
+    pay_date: datetime.date = datetime.date(1970, 1, 1)
     pbik: Decimal = Decimal('0.00')
     total_gross: Decimal = field(init=False, default=Decimal('0.00'))
     total_deductions: Decimal = field(init=False, default=Decimal('0.00'))
@@ -609,97 +610,96 @@ def constants_from_toml(
 ) -> dict[int, dict]:
     """Obtains the HMRC constants by parsing a toml file"""
     with open(file_name, 'rb') as f:
-        data = tomllib.load(f)
+        data = tomllib.load(f, parse_float=Decimal)  # The percentages need to be parsed as Decimals
 
     constants: dict[int, dict] = {}
     for year, cnsts in data['Common'].items():
-        constants[year] = {
-            'B': (
-                Decimal('NaN'),
-                Decimal(cnsts[0]),
-                Decimal(cnsts[1]),
-                Decimal(cnsts[2]),
-            ),
-            'C': (
-                Decimal('NaN'),
-                Decimal(sum(cnsts[0:0])),
-                Decimal(sum(cnsts[0:1])),
-                Decimal(sum(cnsts[0:2])),
-            ),
-            'K': (
-                Decimal('NaN'),
-                Decimal(sum([a * b for a, b in zip(cnsts[0:0], cnsts[3:3])])),
-                Decimal(sum([a * b for a, b in zip(cnsts[0:1], cnsts[3:4])])),
-                Decimal(sum([a * b for a, b in zip(cnsts[0:2], cnsts[3:5])])),
-            ),
-            'R': (
-                Decimal('NaN'),
-                Decimal(cnsts[3]),
-                Decimal(cnsts[4]),
-                Decimal(cnsts[5]),
-                Decimal(cnsts[6]),
-            ),
-            'G': cnsts[7],
-            'M': Decimal(cnsts[8] / 100),
-        }
+        year = int(year)
+        constants[year] = {}
+        constants[year]['B'] = (
+            Decimal('NaN'),
+            Decimal(cnsts[0]),
+            Decimal(cnsts[1]),
+            Decimal(cnsts[2]),
+        )
+        constants[year]['C'] = (
+            Decimal('NaN'),
+            Decimal(sum(cnsts[0:1])),
+            Decimal(sum(cnsts[0:2])),
+            Decimal(sum(cnsts[0:3])),
+        )
+        constants[year]['K'] = (
+            Decimal('NaN'),
+            Decimal(sum([a * b for a, b in zip(cnsts[0:1], cnsts[3:4])])),
+            Decimal(sum([a * b for a, b in zip(cnsts[0:2], cnsts[3:5])])),
+            Decimal(sum([a * b for a, b in zip(cnsts[0:3], cnsts[3:6])])),
+        )
+        constants[year]['R'] = (
+            Decimal('NaN'),
+            Decimal(cnsts[3]),
+            Decimal(cnsts[4]),
+            Decimal(cnsts[5]),
+            Decimal(cnsts[6]),
+        )
+        constants[year]['G'] = cnsts[7]
+        constants[year]['M'] = Decimal(cnsts[8])
 
     for year, cnsts in data['Scotland'].items():
-        constants[year] = {
-            'SB': (
-                Decimal('NaN'),
-                Decimal(cnsts[0]),
-                Decimal(cnsts[1]),
-                Decimal(cnsts[2]),
-                Decimal(cnsts[3]),
-                Decimal(cnsts[4]),
-            ),
-            'SC': (
-                Decimal('NaN'),
-                Decimal(sum(cnsts[0:0])),
-                Decimal(sum(cnsts[0:1])),
-                Decimal(sum(cnsts[0:2])),
-                Decimal(sum(cnsts[0:3])),
-                Decimal(sum(cnsts[0:4])),
-            ),
-            'SK': (
-                Decimal('NaN'),
-                Decimal(sum([a * b for a, b in zip(cnsts[0:0], cnsts[5:5])])),
-                Decimal(sum([a * b for a, b in zip(cnsts[0:1], cnsts[5:6])])),
-                Decimal(sum([a * b for a, b in zip(cnsts[0:2], cnsts[5:7])])),
-                Decimal(sum([a * b for a, b in zip(cnsts[0:3], cnsts[5:8])])),
-                Decimal(sum([a * b for a, b in zip(cnsts[0:4], cnsts[5:9])])),
-            ),
-            'SR': (
-                Decimal('NaN'),
-                Decimal(cnsts[5]),
-                Decimal(cnsts[6]),
-                Decimal(cnsts[7]),
-                Decimal(cnsts[8]),
-                Decimal(cnsts[9]),
-            ),
-            'G1': cnsts[10],
-            'M1': Decimal(cnsts[11] / 100),
-        }
+        year = int(year)
+        constants[year]['SB'] = (
+            Decimal('NaN'),
+            Decimal(cnsts[0]),
+            Decimal(cnsts[1]),
+            Decimal(cnsts[2]),
+            Decimal(cnsts[3]),
+            Decimal(cnsts[4]),
+        )
+        constants[year]['SC'] = (
+            Decimal('NaN'),
+            Decimal(sum(cnsts[0:1])),
+            Decimal(sum(cnsts[0:2])),
+            Decimal(sum(cnsts[0:3])),
+            Decimal(sum(cnsts[0:4])),
+            Decimal(sum(cnsts[0:5])),
+        )
+        constants[year]['SK'] = (
+            Decimal('NaN'),
+            Decimal(sum([a * b for a, b in zip(cnsts[0:1], cnsts[5:6])])),
+            Decimal(sum([a * b for a, b in zip(cnsts[0:2], cnsts[5:7])])),
+            Decimal(sum([a * b for a, b in zip(cnsts[0:3], cnsts[5:8])])),
+            Decimal(sum([a * b for a, b in zip(cnsts[0:4], cnsts[5:9])])),
+            Decimal(sum([a * b for a, b in zip(cnsts[0:5], cnsts[5:10])])),
+        )
+        constants[year]['SR'] = (
+            Decimal('NaN'),
+            Decimal(cnsts[5]),
+            Decimal(cnsts[6]),
+            Decimal(cnsts[7]),
+            Decimal(cnsts[8]),
+            Decimal(cnsts[9]),
+        )
+        constants[year]['G1'] = cnsts[10]
+        constants[year]['M1'] = Decimal(cnsts[11])
 
     for year, cnsts in data['Wales'].items():
-        constants[year] = {
-            'WK': (
-                Decimal('NaN'),
-                Decimal(sum([a * b for a, b in zip(constants[year]['B'][1:1], cnsts[0:0])])),
-                Decimal(sum([a * b for a, b in zip(constants[year]['B'][1:2], cnsts[0:1])])),
-                Decimal(sum([a * b for a, b in zip(constants[year]['B'][1:3], cnsts[0:2])])),
-            ),
-            'WR': (
-                Decimal('NaN'),
-                Decimal(cnsts[0]),
-                Decimal(cnsts[1]),
-                Decimal(cnsts[2]),
-                Decimal(cnsts[3]),
-            ),
-            'G2': cnsts[4],
-            'M2': Decimal(cnsts[5] / 100),
-        }
+        year = int(year)
+        constants[year]['WK'] = (
+            Decimal('NaN'),
+            Decimal(sum([a * b for a, b in zip(constants[year]['B'][1:2], cnsts[0:1])])),
+            Decimal(sum([a * b for a, b in zip(constants[year]['B'][1:3], cnsts[0:2])])),
+            Decimal(sum([a * b for a, b in zip(constants[year]['B'][1:4], cnsts[0:3])])),
+        )
+        constants[year]['WR'] = (
+            Decimal('NaN'),
+            Decimal(cnsts[0]),
+            Decimal(cnsts[1]),
+            Decimal(cnsts[2]),
+            Decimal(cnsts[3]),
+        )
+        constants[year]['G2'] = cnsts[4]
+        constants[year]['M2'] = Decimal(cnsts[5])
 
     return constants
 
-CONSTANTS: dict[int, dict[str, tuple | int | Decimal]] = constants_from_toml()
+
+CONSTANTS: dict[int, dict[str, Any]] = constants_from_toml()

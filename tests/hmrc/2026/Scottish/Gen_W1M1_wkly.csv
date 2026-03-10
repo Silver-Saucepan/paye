@@ -1,0 +1,26 @@
+Employer :,2026 - 27,Scottish tax examples,,,,,
+,,,,,,,
+Year,2026 - 27,,,,,,
+,,,,,,,
+Pay frequency/type,Gross pay,Taxable pay to date,Code,W1/M1,Period , Tax due,Tax due to date
+Gen_W1M1_wkly,29.05,29.05,S145L,WM1,1,0.00,0.00
+Gen_W1M1_wkly,29.06,29.06,S145L,WM1,1,0.19,0.19
+Gen_W1M1_wkly,750.06,750.06,S145L,WM1,1,173.65,173.65
+Gen_W1M1_wkly,750.07,750.07,S145L,WM1,1,173.65,173.65
+Gen_W1M1_wkly,2913.06,2913.06,S145L,WM1,1,1146.99,1146.99
+Gen_W1M1_wkly,2913.07,2913.07,S145L,WM1,1,1146.99,1146.99
+Gen_W1M1_wkly,101.99,101.99,SBR,WM1,1,20.20,20.20
+Gen_W1M1_wkly,324.63,324.63,SBR,WM1,1,64.80,64.80
+Gen_W1M1_wkly,101.99,101.99,SD0,WM1,1,21.21,21.21
+Gen_W1M1_wkly,324.63,324.63,SD0,WM1,1,68.04,68.04
+Gen_W1M1_wkly,101.99,101.99,SD1,WM1,1,42.42,42.42
+Gen_W1M1_wkly,324.63,324.63,SD1,WM1,1,136.08,136.08
+Gen_W1M1_wkly,101.99,101.99,SD2,WM1,1,45.45,45.45
+Gen_W1M1_wkly,324.63,324.63,SD2,WM1,1,145.80,145.80
+Gen_W1M1_wkly,1056.81,1056.81,SD2,WM1,1,475.20,475.20
+Gen_W1M1_wkly,101.99,101.99,SD3,WM1,1,48.48,48.48
+Gen_W1M1_wkly,324.63,324.63,SD3,WM1,1,155.52,155.52
+Gen_W1M1_wkly,1056.81,1056.81,SD3,WM1,1,506.88,506.88
+,,,,,,,
+HMRC are aware that the results of some payroll calculations may differ from the test data provided.,,,,,,,
+As long as those results differ by no more than £00.01 then this is acceptable.,,,,,,,
