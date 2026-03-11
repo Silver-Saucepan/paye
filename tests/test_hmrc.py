@@ -41,55 +41,14 @@ class test_rest_gen_cumul_mthly(unittest.TestCase):
             'tests/hmrc/2026/rest/Gen_cumul_mthly.csv', 2026, 'Gen_cumul_mthly'
         )
 
-    def test_period_01(self):
-        hmrc_tax_due = self.payslips[0].income_tax
-        paye_tax_due = paye.tax_due(self.payslips[0], Decimal('0.00'))
-        self.assertEqual(paye_tax_due, hmrc_tax_due)
-
-    def test_period_02(self):
-        hmrc_tax_due = self.payslips[1].income_tax
-        paye_tax_due = paye.tax_due(self.payslips[1], self.payslips[0].tax_to_date)
-        self.assertEqual(paye_tax_due, hmrc_tax_due)
-
-    def test_period_03(self):
-        hmrc_tax_due = self.payslips[2].income_tax
-        paye_tax_due = paye.tax_due(self.payslips[2], self.payslips[1].tax_to_date)
-        self.assertEqual(paye_tax_due, hmrc_tax_due)
-
-    def test_period_04(self):
-        hmrc_tax_due = self.payslips[3].income_tax
-        paye_tax_due = paye.tax_due(self.payslips[3], self.payslips[2].tax_to_date)
-        self.assertEqual(paye_tax_due, hmrc_tax_due)
-
-    def test_period_05(self):
-        hmrc_tax_due = self.payslips[4].income_tax
-        paye_tax_due = paye.tax_due(self.payslips[4], self.payslips[3].tax_to_date)
-        self.assertEqual(paye_tax_due, hmrc_tax_due)
-
-    def test_period_06(self):
-        hmrc_tax_due = self.payslips[5].income_tax
-        paye_tax_due = paye.tax_due(self.payslips[5], self.payslips[4].tax_to_date)
-        self.assertEqual(paye_tax_due, hmrc_tax_due)
-
-    def test_period_07(self):
-        hmrc_tax_due = self.payslips[6].income_tax
-        paye_tax_due = paye.tax_due(self.payslips[6], self.payslips[5].tax_to_date)
-        self.assertEqual(paye_tax_due, hmrc_tax_due)
-
-    def test_period_08(self):
-        hmrc_tax_due = self.payslips[7].income_tax
-        paye_tax_due = paye.tax_due(self.payslips[7], self.payslips[6].tax_to_date)
-        self.assertEqual(paye_tax_due, hmrc_tax_due)
-
-    def test_period_09(self):
-        hmrc_tax_due = self.payslips[8].income_tax
-        paye_tax_due = paye.tax_due(self.payslips[8], self.payslips[7].tax_to_date)
-        self.assertEqual(paye_tax_due, hmrc_tax_due)
-
-    def test_period_10(self):
-        hmrc_tax_due = self.payslips[9].income_tax
-        paye_tax_due = paye.tax_due(self.payslips[9], self.payslips[8].tax_to_date)
-        self.assertEqual(paye_tax_due, hmrc_tax_due)
+    def test_periods(self):
+        for i in range(0, len(self.payslips)):
+            with self.subTest(i=i):
+                hmrc_tax_due = self.payslips[i].income_tax
+                paye_tax_due = paye.tax_due(
+                    self.payslips[i], Decimal('0.0') if self.payslips[i].period == 1 else self.payslips[i - 1].tax_to_date
+                )
+                self.assertEqual(paye_tax_due, hmrc_tax_due)
 
 
 class test_rest_gen_w1m1_mthly(unittest.TestCase):
@@ -100,60 +59,14 @@ class test_rest_gen_w1m1_mthly(unittest.TestCase):
             'tests/hmrc/2026/rest/Gen_W1M1_mthly.csv', 2026, 'Gen_W1M1_mthly'
         )
 
-    def test_period_01(self):
-        hmrc_tax_due = self.payslips[0].income_tax
-        paye_tax_due = paye.tax_due(self.payslips[0], Decimal('0.00'))
-        self.assertEqual(paye_tax_due, hmrc_tax_due)
-
-    def test_period_02(self):
-        hmrc_tax_due = self.payslips[1].income_tax
-        paye_tax_due = paye.tax_due(self.payslips[1], self.payslips[0].tax_to_date)
-        self.assertEqual(paye_tax_due, hmrc_tax_due)
-
-    def test_period_03(self):
-        hmrc_tax_due = self.payslips[2].income_tax
-        paye_tax_due = paye.tax_due(self.payslips[2], self.payslips[1].tax_to_date)
-        self.assertEqual(paye_tax_due, hmrc_tax_due)
-
-    def test_period_04(self):
-        hmrc_tax_due = self.payslips[3].income_tax
-        paye_tax_due = paye.tax_due(self.payslips[3], self.payslips[2].tax_to_date)
-        self.assertEqual(paye_tax_due, hmrc_tax_due)
-
-    def test_period_05(self):
-        hmrc_tax_due = self.payslips[4].income_tax
-        paye_tax_due = paye.tax_due(self.payslips[4], self.payslips[3].tax_to_date)
-        self.assertEqual(paye_tax_due, hmrc_tax_due)
-
-    def test_period_06(self):
-        hmrc_tax_due = self.payslips[5].income_tax
-        paye_tax_due = paye.tax_due(self.payslips[5], self.payslips[4].tax_to_date)
-        self.assertEqual(paye_tax_due, hmrc_tax_due)
-
-    def test_period_07(self):
-        hmrc_tax_due = self.payslips[6].income_tax
-        paye_tax_due = paye.tax_due(self.payslips[6], self.payslips[5].tax_to_date)
-        self.assertEqual(paye_tax_due, hmrc_tax_due)
-
-    def test_period_08(self):
-        hmrc_tax_due = self.payslips[7].income_tax
-        paye_tax_due = paye.tax_due(self.payslips[7], self.payslips[6].tax_to_date)
-        self.assertEqual(paye_tax_due, hmrc_tax_due)
-
-    def test_period_09(self):
-        hmrc_tax_due = self.payslips[8].income_tax
-        paye_tax_due = paye.tax_due(self.payslips[8], self.payslips[7].tax_to_date)
-        self.assertEqual(paye_tax_due, hmrc_tax_due)
-
-    def test_period_10(self):
-        hmrc_tax_due = self.payslips[9].income_tax
-        paye_tax_due = paye.tax_due(self.payslips[9], self.payslips[8].tax_to_date)
-        self.assertEqual(paye_tax_due, hmrc_tax_due)
-
-    def test_period_11(self):
-        hmrc_tax_due = self.payslips[10].income_tax
-        paye_tax_due = paye.tax_due(self.payslips[10], self.payslips[9].tax_to_date)
-        self.assertEqual(paye_tax_due, hmrc_tax_due)
+    def test_periods(self):
+        for i in range(0, len(self.payslips)):
+            with self.subTest(i=i):
+                hmrc_tax_due = self.payslips[i].income_tax
+                paye_tax_due = paye.tax_due(
+                    self.payslips[i], Decimal('0.0') if self.payslips[i].period == 1 else self.payslips[i - 1].tax_to_date
+                )
+                self.assertEqual(paye_tax_due, hmrc_tax_due)
 
 
 class test_rest_br_mthly(unittest.TestCase):
@@ -162,20 +75,68 @@ class test_rest_br_mthly(unittest.TestCase):
     def setUp(self) -> None:
         self.payslips = load_test_cases('tests/hmrc/2026/rest/BR_monthly.csv', 2026, 'BR_Monthly')
 
-    def test_period_01(self):
-        hmrc_tax_due = self.payslips[0].income_tax
-        paye_tax_due = paye.tax_due(self.payslips[0], Decimal('0.0'))
-        self.assertEqual(paye_tax_due, hmrc_tax_due)
+    def test_periods(self):
+        for i in range(0, len(self.payslips)):
+            with self.subTest(i=i):
+                hmrc_tax_due = self.payslips[i].income_tax
+                paye_tax_due = paye.tax_due(
+                    self.payslips[i], Decimal('0.0') if self.payslips[i].period == 1 else self.payslips[i - 1].tax_to_date
+                )
+                self.assertEqual(paye_tax_due, hmrc_tax_due)
 
-    def test_period_02(self):
-        hmrc_tax_due = self.payslips[1].income_tax
-        paye_tax_due = paye.tax_due(self.payslips[1], self.payslips[0].tax_to_date)
-        self.assertEqual(paye_tax_due, hmrc_tax_due)
 
-    def test_period_03(self):
-        hmrc_tax_due = self.payslips[2].income_tax
-        paye_tax_due = paye.tax_due(self.payslips[2], self.payslips[1].tax_to_date)
-        self.assertEqual(paye_tax_due, hmrc_tax_due)
+class test_rest_k_cumul_mthly(unittest.TestCase):
+    payslips = []
+
+    def setUp(self) -> None:
+        self.payslips = load_test_cases(
+            'tests/hmrc/2026/rest/K_cumul_mthly.csv', 2026, 'K_cumul_Mthly'
+        )
+
+    def test_periods(self):
+        for i in range(0, len(self.payslips)):
+            with self.subTest(i=i):
+                hmrc_tax_due = self.payslips[i].income_tax
+                paye_tax_due = paye.tax_due(
+                    self.payslips[i], Decimal('0.0') if self.payslips[i].period == 1 else self.payslips[i - 1].tax_to_date
+                )
+                self.assertEqual(paye_tax_due, hmrc_tax_due)
+
+
+class test_rest_k_w1m1_mthly(unittest.TestCase):
+    payslips = []
+
+    def setUp(self) -> None:
+        self.payslips = load_test_cases(
+            'tests/hmrc/2026/rest/K_W1M1_mthly.csv', 2026, 'K_W1M1_mthly'
+        )
+
+    def test_periods(self):
+        for i in range(0, len(self.payslips)):
+            with self.subTest(i=i):
+                hmrc_tax_due = self.payslips[i].income_tax
+                paye_tax_due = paye.tax_due(
+                    self.payslips[i], Decimal('0.0') if self.payslips[i].period == 1 else self.payslips[i - 1].tax_to_date
+                )
+                self.assertEqual(paye_tax_due, hmrc_tax_due)
+
+
+class test_rest_large_code_mthly(unittest.TestCase):
+    payslips = []
+
+    def setUp(self) -> None:
+        self.payslips = load_test_cases(
+            'tests/hmrc/2026/rest/Large_code_mthly.csv', 2026, 'Large_code_mthly'
+        )
+
+    def test_periods(self):
+        for i in range(0, len(self.payslips)):
+            with self.subTest(i=i):
+                hmrc_tax_due = self.payslips[i].income_tax
+                paye_tax_due = paye.tax_due(
+                    self.payslips[i], Decimal('0.0') if self.payslips[i].period == 1 else self.payslips[i - 1].tax_to_date
+                )
+                self.assertEqual(paye_tax_due, hmrc_tax_due)
 
 
 if __name__ == "__main__":
