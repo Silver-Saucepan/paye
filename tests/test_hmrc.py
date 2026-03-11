@@ -46,7 +46,10 @@ class test_rest_gen_cumul_mthly(unittest.TestCase):
             with self.subTest(i=i):
                 hmrc_tax_due = self.payslips[i].income_tax
                 paye_tax_due = paye.tax_due(
-                    self.payslips[i], Decimal('0.0') if self.payslips[i].period == 1 else self.payslips[i - 1].tax_to_date
+                    self.payslips[i],
+                    Decimal('0.0')
+                    if self.payslips[i].period == 1
+                    else self.payslips[i - 1].tax_to_date,
                 )
                 self.assertEqual(paye_tax_due, hmrc_tax_due)
 
@@ -64,7 +67,10 @@ class test_rest_gen_w1m1_mthly(unittest.TestCase):
             with self.subTest(i=i):
                 hmrc_tax_due = self.payslips[i].income_tax
                 paye_tax_due = paye.tax_due(
-                    self.payslips[i], Decimal('0.0') if self.payslips[i].period == 1 else self.payslips[i - 1].tax_to_date
+                    self.payslips[i],
+                    Decimal('0.0')
+                    if self.payslips[i].period == 1
+                    else self.payslips[i - 1].tax_to_date,
                 )
                 self.assertEqual(paye_tax_due, hmrc_tax_due)
 
@@ -80,7 +86,10 @@ class test_rest_br_mthly(unittest.TestCase):
             with self.subTest(i=i):
                 hmrc_tax_due = self.payslips[i].income_tax
                 paye_tax_due = paye.tax_due(
-                    self.payslips[i], Decimal('0.0') if self.payslips[i].period == 1 else self.payslips[i - 1].tax_to_date
+                    self.payslips[i],
+                    Decimal('0.0')
+                    if self.payslips[i].period == 1
+                    else self.payslips[i - 1].tax_to_date,
                 )
                 self.assertEqual(paye_tax_due, hmrc_tax_due)
 
@@ -98,7 +107,10 @@ class test_rest_k_cumul_mthly(unittest.TestCase):
             with self.subTest(i=i):
                 hmrc_tax_due = self.payslips[i].income_tax
                 paye_tax_due = paye.tax_due(
-                    self.payslips[i], Decimal('0.0') if self.payslips[i].period == 1 else self.payslips[i - 1].tax_to_date
+                    self.payslips[i],
+                    Decimal('0.0')
+                    if self.payslips[i].period == 1
+                    else self.payslips[i - 1].tax_to_date,
                 )
                 self.assertEqual(paye_tax_due, hmrc_tax_due)
 
@@ -116,7 +128,10 @@ class test_rest_k_w1m1_mthly(unittest.TestCase):
             with self.subTest(i=i):
                 hmrc_tax_due = self.payslips[i].income_tax
                 paye_tax_due = paye.tax_due(
-                    self.payslips[i], Decimal('0.0') if self.payslips[i].period == 1 else self.payslips[i - 1].tax_to_date
+                    self.payslips[i],
+                    Decimal('0.0')
+                    if self.payslips[i].period == 1
+                    else self.payslips[i - 1].tax_to_date,
                 )
                 self.assertEqual(paye_tax_due, hmrc_tax_due)
 
@@ -134,7 +149,10 @@ class test_rest_large_code_mthly(unittest.TestCase):
             with self.subTest(i=i):
                 hmrc_tax_due = self.payslips[i].income_tax
                 paye_tax_due = paye.tax_due(
-                    self.payslips[i], Decimal('0.0') if self.payslips[i].period == 1 else self.payslips[i - 1].tax_to_date
+                    self.payslips[i],
+                    Decimal('0.0')
+                    if self.payslips[i].period == 1
+                    else self.payslips[i - 1].tax_to_date,
                 )
                 self.assertEqual(paye_tax_due, hmrc_tax_due)
 
