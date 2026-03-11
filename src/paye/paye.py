@@ -7,24 +7,22 @@ throughout the tax year under a scheme called 'PAYE' (Pay As You Earn).
 This module provides a partial implementation of:
 
     'HMRC Specification for PAYE Tax Table Routines'
-    Version 23.0, January 2025
+    Version 24.0, January 2026
 
 Exported classes:
     TaxCode: Analyses an HMRC tax code
     Payslip: All the data normally shown on a payslip
 
 Exported functions:
-    tax_due: calculate tax due for monthly income
-    constants_from_csv: Obtain HMRC yearly constants from a CSV file
-    constants_from_google_sheets: Obtain HMRC yearly constants from Google Sheets
+    tax_due: calculate tax due
 
 Currently not implemented:
-* Weekly pay
 * Scottish tax codes
 * Welsh tax codes
 """
 
 import datetime
+import os
 import re
 import tomllib
 from dataclasses import dataclass, field
@@ -53,6 +51,7 @@ TAX_CODE_REGEX: Final[str] = (
 # Group 5: The basis (cumulative vs week 1/month 1) identified by the following codes
 
 MONTH_1_BASIS_CODES: Final[tuple] = ('1', '(M1)', 'X', 'WM1')
+N_PERIODS = 12 if os.environ.get('PAYE_PERIOD', 'monthly').lower() == 'monthly' else 52
 
 
 @final
@@ -164,8 +163,12 @@ class TaxCode:
             # at the end of 4.3.1
             q, r = divmod(numeric - 1, Decimal('500'))
             r += 1
-            free_pay_r = ((r * 10 + 9) / 12).quantize(Decimal('0.01'), rounding=ROUND_CEILING)
-            free_pay_q = q * Decimal('416.67')
+            free_pay_r = ((r * 10 + 9) / N_PERIODS).quantize(Decimal('0.01'), rounding=ROUND_CEILING)
+            free_pay_q = q * (
+                Decimal('416.67')
+                if os.environ.get('PAYE_PERIOD', 'monthly').lower() == 'monthly'
+                else Decimal('96.16')
+            )
             free_pay = free_pay_q + free_pay_r
             if self.prefix == 'K':
                 free_pay *= -1
@@ -261,6 +264,7 @@ def uk_tax_period_start_date(tax_year: int, tax_period: int) -> datetime.date:
     Returns:
         The start date of the tax period
     """
+    # FIXME: This only works for monthly periods
     q, r = divmod(tax_period + 3, 12)
     d = datetime.date(year=tax_year + q, month=r, day=6)
     return d
@@ -328,13 +332,13 @@ def __tax_due_to_date(
         L_n = T_n * CONSTANTS[year]['R'][rate_pointer]
     else:
         # Threshold values, Definition 9
-        c = [C * period / 12 for C in CONSTANTS[year]['C']]
+        c = [C * period / N_PERIODS for C in CONSTANTS[year]['C']]
 
         # Rounded threshold taxes, Definition 10
         v = [item.quantize(Decimal('1'), rounding=ROUND_CEILING) for item in c]
 
         # Threshold taxes, Definition 11
-        k = [K * period / 12 for K in CONSTANTS[year]['K']]
+        k = [K * period / N_PERIODS for K in CONSTANTS[year]['K']]
 
         if taxable_pay_to_date <= v[1]:
             # Tax Formula 1

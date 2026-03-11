@@ -10,19 +10,18 @@ In this system, His/Her Majesty's Revenue and Customs (HMRC) gives
 the employer/pension provider a "Tax Code" which they use to calculate
 how much income tax to deduct.
 
-This package partially implements the algorithms defined by HMRC
-in their "SPECIFICATION FOR PAYE TAX TABLE ROUTINES" Version 23,
-dated January 2025
+This package partially implements the algorithms for calculating the income tax
+due as defined by HMRC in their "SPECIFICATION FOR PAYE TAX TABLE ROUTINES"
+Version 24, dated January 2026
 
 ## HMRC Constants
 
 The algorithms use a set of constants that are dependent on tax year
 and defined in the Specification.
 
-This package reads the constants from a Google Spreadsheet which needs
-to be updated for each new tax year.
+This package reads the constants from a TOML file 'hmrc.toml'
+which needs to be updated for each new tax year.
 
 ## Not Implemented
 
-1. Weekly pay
-2. Scottish and Welsh tax codes
+1. Scottish and Welsh tax codes
