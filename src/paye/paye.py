@@ -27,7 +27,6 @@ Currently not implemented:
 import csv
 import datetime
 import os.path
-import pprint
 import re
 import tomllib
 from dataclasses import dataclass, field
