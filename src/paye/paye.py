@@ -24,26 +24,12 @@ Currently not implemented:
 * Welsh tax codes
 """
 
-import csv
 import datetime
-import os.path
 import re
 import tomllib
 from dataclasses import dataclass, field
 from decimal import ROUND_CEILING, ROUND_FLOOR, Decimal
 from typing import Final, final, Any
-
-from google.auth.transport.requests import Request
-from google.oauth2.credentials import Credentials
-from google_auth_oauthlib.flow import InstalledAppFlow
-from googleapiclient.discovery import build
-from googleapiclient.errors import HttpError
-
-# If modifying these scopes, delete the file token.json.
-SCOPES: Final[list[str]] = ["https://www.googleapis.com/auth/spreadsheets.readonly"]
-
-PROGNOSTICATOR_ID: Final[str] = "180xcr-5WQ_6W4pwSpbxTkwydLfdQUN5nUqut6PufO0E"
-HMRC_DATA: Final[str] = "HMRC & ONS Parameters!A4:P"
 
 TAX_CODE_REGEX: Final[str] = (
     r'^(?P<country>[SC])?(?P<prefix>BR|NT|0T|D|K)?(?P<numeric>\d*)(?P<suffix>[LMNTPY])?[\s/]*(?P<basis>.*)'
@@ -458,150 +444,6 @@ def tax_due(payslip: Payslip, tax_to_date: Decimal) -> Decimal:
             p_n=payslip.total_gross,
             pbik=payslip.pbik,
         )
-
-
-def constants_from_csv(
-    file_name: str = 'Income Prognosticator - HMRC & ONS Parameters.csv',
-) -> dict[int, dict]:
-    """Obtains the HMRC constants by parsing a CSV file
-
-    As obtained by downloading from my Income Prognosticator Google spreadsheet into the active directory.
-    """
-    consts: dict[int, dict] = {}
-    fieldnames = (
-        'Tax year',
-        'B_1',
-        'B_2',
-        'B_3',
-        'C_1',
-        'C_2',
-        'C_3',
-        'K_1',
-        'K_2',
-        'K_3',
-        'R_1',
-        'R_2',
-        'R_3',
-        'R_4',
-        'G',
-        'M',
-    )
-    with open(file_name, 'r', encoding='utf-8') as csvfile:
-        reader = csv.DictReader(csvfile, fieldnames=fieldnames)
-        for _ in range(3):
-            # Skip the header rows
-            next(reader)
-        for row in reader:
-            if '#N/A' in row.values():
-                # Only process years when all the data are present
-                continue
-            tax_year = int(row['Tax year'][-4:])
-
-            consts[tax_year] = {
-                'B': (
-                    Decimal('0'),
-                    str_to_decimal(row['B_1']),
-                    str_to_decimal(row['B_2']),
-                    str_to_decimal(row['B_3']),
-                ),
-                'C': (
-                    Decimal('0'),
-                    str_to_decimal(row['C_1']),
-                    str_to_decimal(row['C_2']),
-                    str_to_decimal(row['C_3']),
-                ),
-                'K': (
-                    Decimal('0'),
-                    str_to_decimal(row['K_1']),
-                    str_to_decimal(row['K_2']),
-                    str_to_decimal(row['K_3']),
-                ),
-                'R': (
-                    Decimal('0'),
-                    str_to_decimal(row['R_1']) / 100,
-                    str_to_decimal(row['R_2']) / 100,
-                    str_to_decimal(row['R_3']) / 100,
-                    str_to_decimal(row['R_4']) / 100,
-                ),
-                'G': int(row['G']),
-                'M': str_to_decimal(row['M']) / 100,
-            }
-    return consts
-
-
-def constants_from_google_sheets():
-    """Obtains the HMRC constants directly from my Income Prognosticator spreadsheet using the Sheets API."""
-    consts: dict[int, dict] = {}
-
-    creds = None
-    # The file token.json stores the user's access and refresh tokens,
-    # and is created automatically when the authorization flow completes
-    # for the first time.
-    if os.path.exists("token.json"):
-        creds = Credentials.from_authorized_user_file("token.json", SCOPES)
-    # If there are no (valid) credentials available,
-    # let the user log in.
-    if not creds or not creds.valid:
-        if creds and creds.expired and creds.refresh_token:
-            creds.refresh(Request())
-        else:
-            flow = InstalledAppFlow.from_client_secrets_file("credentials.json", SCOPES)
-            creds = flow.run_local_server(port=0)
-        # Save the credentials for the next run
-        with open("token.json", "w") as token:
-            token.write(creds.to_json())
-
-    try:
-        service = build("sheets", "v4", credentials=creds)
-
-        # Call the Sheets API
-        sheet = service.spreadsheets()
-        result = sheet.values().get(spreadsheetId=PROGNOSTICATOR_ID, range=HMRC_DATA).execute()
-        values = result.get("values", [])
-
-        if not values:
-            raise ValueError("No data found.")
-
-        for row in values:
-            if '#N/A' in row:
-                # Only process years when all the data are present
-                continue
-            tax_year = int(row[0][-4:])
-
-            consts[tax_year] = {
-                'B': (
-                    Decimal('0'),
-                    str_to_decimal(row[1]),
-                    str_to_decimal(row[2]),
-                    str_to_decimal(row[3]),
-                ),
-                'C': (
-                    Decimal('0'),
-                    str_to_decimal(row[4]),
-                    str_to_decimal(row[5]),
-                    str_to_decimal(row[6]),
-                ),
-                'K': (
-                    Decimal('0'),
-                    str_to_decimal(row[7]),
-                    str_to_decimal(row[8]),
-                    str_to_decimal(row[9]),
-                ),
-                'R': (
-                    Decimal('0'),
-                    str_to_decimal(row[10]) / 100,
-                    str_to_decimal(row[11]) / 100,
-                    str_to_decimal(row[12]) / 100,
-                    str_to_decimal(row[13]) / 100,
-                ),
-                'G': int(row[14]),
-                'M': str_to_decimal(row[15]) / 100,
-            }
-
-    except HttpError as err:
-        print(err)
-
-    return consts
 
 
 def constants_from_toml(
