@@ -30,7 +30,7 @@ from decimal import ROUND_CEILING, ROUND_FLOOR, Decimal
 from typing import Final, final, Any
 
 TAX_CODE_REGEX: Final[str] = (
-    r'^(?P<country>[SC])?(?P<prefix>BR|NT|0T|D|K)?(?P<numeric>\d*)(?P<suffix>[LMNTPY])?[\s/]*(?P<basis>.*)'
+    r'^(?P<country>[SC])?(?P<prefix>BR|NT|0T|D|K)?(?P<numeric>\d*)(?P<suffix>[LMNTPY])?[\s/]*(?P<basis>[\w ]*)'
 )
 # Meaning of the groups:
 # Group 1: Indicates if Scottish or Welsh rules apply
@@ -50,7 +50,6 @@ TAX_CODE_REGEX: Final[str] = (
 #   Y = Disused?
 # Group 5: The basis (cumulative vs week 1/month 1) identified by the following codes
 
-MONTH_1_BASIS_CODES: Final[tuple] = ('1', '(M1)', 'X', 'WM1')
 N_PERIODS = 12 if os.environ.get('PAYE_PERIOD', 'monthly').lower() == 'monthly' else 52
 
 
@@ -71,7 +70,7 @@ class TaxCode:
     prefix: str | None
     numeric_part: str | None
     suffix: str | None
-    basis: str | None
+    basis: str
 
     def __init__(self, code: str) -> None:
         """Parse a tax code into its component parts and check for unsupported features
@@ -118,10 +117,6 @@ class TaxCode:
         """Return True if it's a 'No Tax' code."""
         return self.prefix == 'NT'
 
-    def is_na(self) -> bool:
-        """Return True if the code is '#N/A'."""
-        return self.code == '#N/A'
-
     def d_index(self) -> int | None:
         """The tax code indicates all income is subject to Higher or Additional rate tax
 
@@ -131,15 +126,13 @@ class TaxCode:
         if self.prefix == 'D' and self.numeric_part:
             return int(self.numeric_part)
 
-    def is_month1(self) -> bool:
-        """Return True if the code indicates a 'Month 1' code."""
-        # HMRC and individual payroll systems use different suffixes to
-        # indicate month 1
-        return self.basis in MONTH_1_BASIS_CODES
+    def is_w1m1(self) -> bool:
+        """Return True if the code indicates a 'Week 1/Month 1' code."""
+        return not self.is_cumulative()
 
     def is_cumulative(self) -> bool:
-        """Return True if the code does not indicate a 'Month 1' code."""
-        return not self.is_month1()
+        """Return True if the code is a cumulative basis code."""
+        return self.basis == '' or 'C' in self.basis.upper()
 
     def free_pay_m1(self) -> Decimal:
         """
@@ -163,7 +156,9 @@ class TaxCode:
             # at the end of 4.3.1
             q, r = divmod(numeric - 1, Decimal('500'))
             r += 1
-            free_pay_r = ((r * 10 + 9) / N_PERIODS).quantize(Decimal('0.01'), rounding=ROUND_CEILING)
+            free_pay_r = ((r * 10 + 9) / N_PERIODS).quantize(
+                Decimal('0.01'), rounding=ROUND_CEILING
+            )
             free_pay_q = q * (
                 Decimal('416.67')
                 if os.environ.get('PAYE_PERIOD', 'monthly').lower() == 'monthly'
