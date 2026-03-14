@@ -16,18 +16,16 @@ Exported classes:
 Exported functions:
     tax_due: calculate tax due
 
-Currently not implemented:
-* Scottish tax codes
-* Welsh tax codes
 """
 
 import datetime
 import os
 import re
-import tomllib
 from dataclasses import dataclass, field
 from decimal import ROUND_CEILING, ROUND_FLOOR, Decimal
-from typing import Final, final, Any
+from typing import Any, Final, final
+
+import tomllib
 
 TAX_CODE_REGEX: Final[str] = (
     r'^(?P<country>[SC])?(?P<prefix>BR|NT|0T|D|K)?(?P<numeric>\d*)(?P<suffix>[LMNTPY])?[\s/]*(?P<basis>[\w ]*)'
@@ -51,6 +49,42 @@ TAX_CODE_REGEX: Final[str] = (
 # Group 5: The basis (cumulative vs week 1/month 1) identified by the following codes
 
 N_PERIODS = 12 if os.environ.get('PAYE_PERIOD', 'monthly').lower() == 'monthly' else 52
+
+
+def tax_rates(code: TaxCode, year: int) -> list[Decimal]:
+    """Return a list of tax rates for the year/nation"""
+    if code.nation == 'S':
+        return CONSTANTS[year]['SR']
+    elif code.nation == 'C':
+        return CONSTANTS[year]['WR']
+    else:
+        return CONSTANTS[year]['R']
+
+
+def basic_rate(code: TaxCode, year: int) -> Decimal:
+    """Return the basic tax rate applicable"""
+    if code.nation == 'S':
+        rate_pointer = CONSTANTS[year]['G1']
+        return CONSTANTS[year]['SR'][rate_pointer]
+    elif code.nation == 'C':
+        rate_pointer = CONSTANTS[year]['G2']
+        return CONSTANTS[year]['WR'][rate_pointer]
+    else:
+        rate_pointer = CONSTANTS[year]['G']
+        return CONSTANTS[year]['R'][rate_pointer]
+
+
+def additional_rate(code: TaxCode, year: int) -> Decimal:
+    """Return the additionl tax rate applicable"""
+    if code.nation == 'S':
+        rate_pointer = CONSTANTS[year]['G1'] + 1 + code.d_index()
+        return CONSTANTS[year]['SR'][rate_pointer]
+    elif code.nation == 'C':
+        rate_pointer = CONSTANTS[year]['G2'] + 1 + code.d_index()
+        return CONSTANTS[year]['WR'][rate_pointer]
+    else:
+        rate_pointer = CONSTANTS[year]['G'] + 1 + code.d_index()
+        return CONSTANTS[year]['R'][rate_pointer]
 
 
 @final
@@ -77,9 +111,6 @@ class TaxCode:
 
         Args:
             code: The tax code as a string
-
-        Raises:
-            NotImplementedError: If the tax code indicates features that are not implemented are required
         """
         self.code = code.strip()
         if self.code:
@@ -93,10 +124,6 @@ class TaxCode:
                     self.suffix,
                     self.basis,
                 ) = r.groups()
-            if self.nation == 'C':
-                raise NotImplementedError("Welsh tax codes not currently implemented")
-            if self.nation == 'S':
-                raise NotImplementedError("Scottish tax codes not currently implemented")
 
     def __str__(self):
         return str(
@@ -134,9 +161,9 @@ class TaxCode:
         """Return True if the code is a cumulative basis code."""
         return self.basis == '' or 'C' in self.basis.upper()
 
-    def free_pay_m1(self) -> Decimal:
+    def free_pay_w1m1(self) -> Decimal:
         """
-        Calculate the Free Pay or Additional Pay for Month 1.
+        Calculate the Free Pay or Additional Pay for Week 1/Month 1.
 
         Implementation of algorithm specified in section 4.3.1 of
         "HMRC Specification for PAYE Tax Table Routines".
@@ -178,7 +205,7 @@ class Payslip:
     Attributes:
         payer_name (str): Name of organisation making payment
         year (int): The calendar year in which the tax year starts
-        period (int): The tax period (1 to 12)
+        period (int): The tax period (1 to 52)
         code (TaxCode): The tax code provided by HMRC
         pay_to_date (Decimal): The pay received this tax year (including this period)
         tax_to_date (Decimal): The tax paid this tax year (including this period)
@@ -250,7 +277,7 @@ class Payslip:
 
 
 def uk_tax_period_start_date(tax_year: int, tax_period: int) -> datetime.date:
-    """Return the start date of the given tax period in the given tax year
+    """Return the start date of the given monthly tax period in the given tax year
 
     Args:
         tax_year: The year in which the tax year starts
@@ -259,7 +286,6 @@ def uk_tax_period_start_date(tax_year: int, tax_period: int) -> datetime.date:
     Returns:
         The start date of the tax period
     """
-    # FIXME: This only works for monthly periods
     q, r = divmod(tax_period + 3, 12)
     d = datetime.date(year=tax_year + q, month=r, day=6)
     return d
@@ -293,7 +319,7 @@ def __taxable_pay_to_date(
         U_n = cumulative_pay_to_date
     else:
         # Free pay or Additional pay for Month n
-        na_1 = code.free_pay_m1() * period
+        na_1 = code.free_pay_w1m1() * period
 
         # 4.3.2 Calculation of Taxable Pay to date, U_n
         U_n = cumulative_pay_to_date - na_1
@@ -319,36 +345,35 @@ def __tax_due_to_date(
         L_n = Decimal('0.00')  # L_n, or Tax due to date is zero
     elif code.is_br():
         # Section 5.4, whole of rounded pay to date taxed at rate G
-        rate_pointer = CONSTANTS[year]['G']
-        L_n = T_n * CONSTANTS[year]['R'][rate_pointer]
+        L_n = T_n * basic_rate(code, year)
     elif code.d_index() is not None:
         # Section 6: Whole of taxable pay taxed at Higher or Additional rate
-        rate_pointer = CONSTANTS[year]['G'] + 1 + code.d_index()
-        L_n = T_n * CONSTANTS[year]['R'][rate_pointer]
+        L_n = T_n * additional_rate(code, year)
     else:
         # Threshold values, Definition 9
-        c = [C * period / N_PERIODS for C in CONSTANTS[year]['C']]
+        cs = [
+            C * period / N_PERIODS
+            for C in CONSTANTS[year][('S' if code.nation == 'S' else '') + 'C']
+        ]
 
         # Rounded threshold taxes, Definition 10
-        v = [item.quantize(Decimal('1'), rounding=ROUND_CEILING) for item in c]
+        vs = [c.quantize(Decimal('0'), rounding=ROUND_CEILING) for c in cs]
 
         # Threshold taxes, Definition 11
-        k = [K * period / N_PERIODS for K in CONSTANTS[year]['K']]
+        ks = [
+            K * period / N_PERIODS
+            for K in CONSTANTS[year][('S' if code.nation == 'S' else '') + 'K']
+        ]
 
-        if taxable_pay_to_date <= v[1]:
-            # Tax Formula 1
-            L_n = k[0] + (T_n - c[0]) * CONSTANTS[year]['R'][1]
-        elif taxable_pay_to_date <= v[2]:
-            # Tax Formula 2
-            L_n = k[1] + (T_n - c[1]) * CONSTANTS[year]['R'][2]
-        elif taxable_pay_to_date <= v[3]:
-            # Tax Formula 3
-            L_n = k[2] + (T_n - c[2]) * CONSTANTS[year]['R'][3]
-        else:
-            # Tax Formula x + 1
-            L_n = k[3] + (T_n - c[3]) * CONSTANTS[year]['R'][4]
+        rates = tax_rates(code, year)
 
-    L_n = L_n.quantize(Decimal('0.00'), rounding=ROUND_FLOOR)
+        L_n = ks[-1] + (T_n - cs[-1]) * rates[-1]
+        for v, k, c, r in zip(vs[1:], ks[0:], cs[0:], rates[1:]):
+            if taxable_pay_to_date <= v:
+                L_n = k + (T_n - c) * r
+                break
+
+        L_n = L_n.quantize(Decimal('0.00'), rounding=ROUND_FLOOR)
 
     return L_n
 
@@ -395,7 +420,7 @@ def __tax_due_month1(
     prefix K code.
     """
     # Stage 1: Taxable pay for the month, section 8.2
-    U_n = p_n - code.free_pay_m1()
+    U_n = p_n - code.free_pay_w1m1()
 
     # Stage 2: Tax due, section 8.3
     L_n = __tax_due_to_date(year=year, period=1, code=code, taxable_pay_to_date=U_n)
@@ -445,7 +470,7 @@ def tax_due(payslip: Payslip, tax_to_date: Decimal) -> Decimal:
         )
 
 
-def constants_from_toml(
+def _constants_from_toml(
     file_name: str = 'hmrc.toml',
 ) -> dict[int, dict]:
     """Obtains the HMRC constants by parsing a toml file"""
@@ -463,13 +488,15 @@ def constants_from_toml(
             Decimal(cnsts[2]),
         )
         constants[year]['C'] = (
-            Decimal('NaN'),
+            # See notes in section 4.4.4 re additional parameter c0
+            Decimal('0.00'),
             Decimal(sum(cnsts[0:1])),
             Decimal(sum(cnsts[0:2])),
             Decimal(sum(cnsts[0:3])),
         )
         constants[year]['K'] = (
-            Decimal('NaN'),
+            # See notes in section 4.4.4 re additional parameter k0
+            Decimal('0.00'),
             Decimal(sum([a * b for a, b in zip(cnsts[0:1], cnsts[3:4])])),
             Decimal(sum([a * b for a, b in zip(cnsts[0:2], cnsts[3:5])])),
             Decimal(sum([a * b for a, b in zip(cnsts[0:3], cnsts[3:6])])),
@@ -495,7 +522,8 @@ def constants_from_toml(
             Decimal(cnsts[4]),
         )
         constants[year]['SC'] = (
-            Decimal('NaN'),
+            # See notes in section 4.4.4 re additional parameter Sc0
+            Decimal('0.00'),
             Decimal(sum(cnsts[0:1])),
             Decimal(sum(cnsts[0:2])),
             Decimal(sum(cnsts[0:3])),
@@ -503,7 +531,8 @@ def constants_from_toml(
             Decimal(sum(cnsts[0:5])),
         )
         constants[year]['SK'] = (
-            Decimal('NaN'),
+            # See notes in section 4.4.4 re additional parameter Sk0
+            Decimal('0.00'),
             Decimal(sum([a * b for a, b in zip(cnsts[0:1], cnsts[5:6])])),
             Decimal(sum([a * b for a, b in zip(cnsts[0:2], cnsts[5:7])])),
             Decimal(sum([a * b for a, b in zip(cnsts[0:3], cnsts[5:8])])),
@@ -517,14 +546,16 @@ def constants_from_toml(
             Decimal(cnsts[7]),
             Decimal(cnsts[8]),
             Decimal(cnsts[9]),
+            Decimal(cnsts[10]),
         )
-        constants[year]['G1'] = cnsts[10]
-        constants[year]['M1'] = Decimal(cnsts[11])
+        constants[year]['G1'] = cnsts[11]
+        constants[year]['M1'] = Decimal(cnsts[12])
 
     for year, cnsts in data['Wales'].items():
         year = int(year)
         constants[year]['WK'] = (
-            Decimal('NaN'),
+            # See notes in section 4.4.4 re additional parameter Wk0
+            Decimal('0.00'),
             Decimal(sum([a * b for a, b in zip(constants[year]['B'][1:2], cnsts[0:1])])),
             Decimal(sum([a * b for a, b in zip(constants[year]['B'][1:3], cnsts[0:2])])),
             Decimal(sum([a * b for a, b in zip(constants[year]['B'][1:4], cnsts[0:3])])),
@@ -542,4 +573,5 @@ def constants_from_toml(
     return constants
 
 
-CONSTANTS: dict[int, dict[str, Any]] = constants_from_toml()
+# Load the constants when the module is imported
+CONSTANTS: dict[int, dict[str, Any]] = _constants_from_toml()

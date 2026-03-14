@@ -6,7 +6,8 @@ authors = [
 ]
 description = "A partial implementation of UK income tax Pay-As-You-Earn calculations"
 readme = "README.md"
-requires-python = ">=3.9"
+# Uses forward references for annotations which was introduced in 3.14
+requires-python = ">=3.14"
 classifiers = [
     "Programming Language :: Python :: 3",
     "Operating System :: OS Independent",
