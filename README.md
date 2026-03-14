@@ -30,6 +30,13 @@ which needs to be updated for each new tax year.
 
 ## Usage
 
+Weekly vs Monthly pay is selected by the environment variable PAYE_PERIOD:
+PAYE_PERIOD=weekly
+or
+PAYE_PERIOD=monthly
+
+if unset, monthly is assumed
+
 The inputs are:
 
 1. Your gross pay for the week / month
