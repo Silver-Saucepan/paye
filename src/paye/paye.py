@@ -24,6 +24,7 @@ import re
 import tomllib
 from dataclasses import dataclass, field
 from decimal import ROUND_CEILING, ROUND_FLOOR, Decimal
+from importlib import resources
 from typing import Any, Final, final
 
 TAX_CODE_REGEX: Final[str] = (
@@ -473,7 +474,7 @@ def _constants_from_toml(
     file_name: str = 'hmrc.toml',
 ) -> dict[int, dict]:
     """Obtains the HMRC constants by parsing a toml file"""
-    with open(file_name, 'rb') as f:
+    with resources.files('paye.data').joinpath(file_name).open('rb') as f:
         data = tomllib.load(f, parse_float=Decimal)  # The percentages need to be parsed as Decimals
 
     constants: dict[int, dict] = {}
