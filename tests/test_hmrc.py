@@ -412,8 +412,13 @@ if __name__ == "__main__":
     or
     PAYE_PERIOD=weekly python tests/test_hmrc.py
     """
+    period = os.environ.get('PAYE_PERIOD', 'monthly').lower()
     runner = unittest.TextTestRunner()
-    if os.environ.get('PAYE_PERIOD', 'monthly').lower() == 'monthly':
+    if period == 'monthly':
+        print("Running tests for montly pay, set PAYE_PERIOD=weekly to test weekly pay")
         runner.run(monthly())
-    else:
+    elif period == 'weekly':
+        print ("Running tests for weekly pay, set PAYE_PERIOD=monthly to test weekly pay")
         runner.run(weekly())
+    else:
+        print("PAYE_PERIOD must be weekly or monthly")
