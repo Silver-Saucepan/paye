@@ -21,11 +21,10 @@ Exported functions:
 import datetime
 import os
 import re
+import tomllib
 from dataclasses import dataclass, field
 from decimal import ROUND_CEILING, ROUND_FLOOR, Decimal
 from typing import Any, Final, final
-
-import tomllib
 
 TAX_CODE_REGEX: Final[str] = (
     r'^(?P<country>[SC])?(?P<prefix>BR|NT|0T|D|K)?(?P<numeric>\d*)(?P<suffix>[LMNTPY])?[\s/]*(?P<basis>[\w ]*)'
