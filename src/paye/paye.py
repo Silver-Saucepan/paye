@@ -45,7 +45,7 @@ TAX_CODE_REGEX: Final[str] = (
 #   T = "Other calculations" included
 #   P = Disused?
 #   Y = Disused?
-# Group 5: The basis (cumulative vs week 1/month 1) identified by the following codes
+# Group 5: The basis (cumulative vs week 1/month 1)
 
 N_PERIODS = 12 if os.environ.get('PAYE_PERIOD', 'monthly').lower() == 'monthly' else 52
 
