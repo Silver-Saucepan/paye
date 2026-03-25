@@ -1,29 +1,31 @@
+[build-system]
+# Version 1.26 introduced support for license meta-data
+requires = ["hatchling >= 1.26"]
+build-backend = "hatchling.build"
+
 [project]
 name = "paye"
 dynamic = ["version"]
-authors = [
-  { name="Paul Worrall", email="p.r.worrall@gmail.com" },
-]
 description = "A partial implementation of UK income tax Pay-As-You-Earn calculations"
+authors = [{ name = "Paul Worrall", email = "p.r.worrall@gmail.com" }]
 readme = "README.md"
 # Uses forward references for annotations which was introduced in 3.14
 requires-python = ">=3.14"
-classifiers = [
-    "Programming Language :: Python :: 3",
-    "Operating System :: OS Independent",
-]
+dependencies = []
 license = "MIT"
 license-files = ["LICEN[CS]E*"]
-
-dependencies = []
+keywords = []
+classifiers = [
+  "Programming Language :: Python :: 3",
+  "Operating System :: OS Independent",
+]
 
 [project.urls]
 Homepage = "https://github.com/Silver-Saucepan/paye"
 Issues = "https://github.com/Silver-Saucepan/paye/issues"
 
-[build-system]
-requires = ["hatchling >= 1.26"]
-build-backend = "hatchling.build"
+[project.optional-dependencies]
+dev = ["build"]
 
 [tool.hatch.version]
 path = "src/paye/__about__.py"
@@ -32,5 +34,4 @@ path = "src/paye/__about__.py"
 line-length = 100
 
 [tool.ruff.format]
-# Don't mess with quotes
 quote-style = "preserve"
