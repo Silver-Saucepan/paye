@@ -6,7 +6,7 @@ build-backend = "hatchling.build"
 [project]
 name = "paye"
 dynamic = ["version"]
-description = "A partial implementation of UK income tax Pay-As-You-Earn calculations"
+description = "An implementation of UK income tax Pay-As-You-Earn calculations"
 authors = [{ name = "Paul Worrall", email = "p.r.worrall@gmail.com" }]
 readme = "README.md"
 # Uses forward references for annotations which was introduced in 3.14
