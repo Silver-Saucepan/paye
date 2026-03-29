@@ -31,7 +31,7 @@ TAX_CODE_REGEX: Final[str] = (
     r'^(?P<nation>[SC])?(?P<prefix>BR|NT|0T|D|K)?(?P<numeric>\d*)(?P<suffix>[LMNTPY])?[\s/]*(?P<basis>[\w ]*)'
 )
 # Meaning of the groups:
-# Group 1: Indicates if Scottish or Welsh rules apply
+# Group 1: Indicates if Scottish (S) or Welsh (C for Cymru) rules apply
 # Group 2: The Prefix
 #   BR = Basic Rate on whole amount
 #   NT = No Tax
