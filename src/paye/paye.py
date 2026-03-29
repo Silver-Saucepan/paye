@@ -126,15 +126,17 @@ class TaxCode:
                 ) = r.groups()
 
     def __str__(self):
-        return str(
-            (
-                self.nation,
-                self.prefix,
-                self.numeric_part,
-                self.suffix,
-                self.basis,
-            )
-        )
+        return f"""Tax code {self.code}
+    Nation: {self.nation}
+    Prefix: {self.prefix}
+    Numeric: {self.numeric_part}
+    Suffix: {self.suffix}
+    Basis: {self.basis}
+
+    BR: {self.is_br()}
+    NT: {self.is_nt()}
+    D-Index: {self.d_index()}
+    W1M1: {self.is_w1m1()}"""
 
     def is_br(self) -> bool:
         """Return True if it's a basic rate code."""
