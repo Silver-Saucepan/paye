@@ -28,7 +28,7 @@ from importlib import resources
 from typing import Any, Final, final
 
 TAX_CODE_REGEX: Final[str] = (
-    r'^(?P<country>[SC])?(?P<prefix>BR|NT|0T|D|K)?(?P<numeric>\d*)(?P<suffix>[LMNTPY])?[\s/]*(?P<basis>[\w ]*)'
+    r'^(?P<nation>[SC])?(?P<prefix>BR|NT|0T|D|K)?(?P<numeric>\d*)(?P<suffix>[LMNTPY])?[\s/]*(?P<basis>[\w ]*)'
 )
 # Meaning of the groups:
 # Group 1: Indicates if Scottish or Welsh rules apply
