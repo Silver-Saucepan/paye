@@ -27,6 +27,7 @@ which needs to be updated for each new tax year.
 1. the TaxCode class
 2. the Payslip class
 3. the tax_due function
+4. utility functions str_to_decimal and uk_tax_period_start_date
 
 ## Usage
 
