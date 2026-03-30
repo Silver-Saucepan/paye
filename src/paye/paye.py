@@ -1,10 +1,10 @@
-"""A partial implementation of PAYE income tax rules for England.
+"""An implementation of PAYE income tax rules for England.
 
 In the UK, employees and pensioners usually pay their income tax in
 monthly or weekly installments deducted automatically from their pay
 throughout the tax year under a scheme called 'PAYE' (Pay As You Earn).
 
-This module provides a partial implementation of:
+This module provides an implementation of:
 
     'HMRC Specification for PAYE Tax Table Routines'
     Version 24.0, January 2026
@@ -15,6 +15,7 @@ Exported classes:
 
 Exported functions:
     tax_due: calculate tax due
+
 
 """
 
