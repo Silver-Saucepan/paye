@@ -10,6 +10,10 @@ def load_test_cases(
     year: int,
     case_type: str,
 ) -> list[paye.Payslip]:
+    """Load period test data from csv file file_name and return it as a list of Payslips
+
+    The Payslips contain the required result in their income_tax attribute
+    """
 
     field_names = ('type', 'pay', 'pay_to_date', 'tax_code', 'w1m1', 'period', 'tax', 'tax_to_date')
 
@@ -34,7 +38,8 @@ def load_test_cases(
     return cases
 
 
-def get_tax_due(payslips, i):
+def get_tax_due(payslips: list[paye.Payslip], i: int) -> tuple[Decimal, Decimal]:
+    """For the i'th Payslip,  return the calculated tax and the required answer"""
     hmrc_tax_due = payslips[i].income_tax
     paye_tax_due = paye.tax_due(
         payslips[i],
@@ -43,7 +48,7 @@ def get_tax_due(payslips, i):
     return paye_tax_due, hmrc_tax_due
 
 
-class test_rest_gen_cumul_mthly(unittest.TestCase):
+class TestRestGenCumulMthly(unittest.TestCase):
     payslips = []
 
     def setUp(self) -> None:
@@ -58,7 +63,7 @@ class test_rest_gen_cumul_mthly(unittest.TestCase):
                 self.assertEqual(paye, hmrc)
 
 
-class test_rest_gen_cumul_wkly(unittest.TestCase):
+class TestRestGenCumulWkly(unittest.TestCase):
     payslips = []
 
     def setUp(self) -> None:
@@ -73,7 +78,7 @@ class test_rest_gen_cumul_wkly(unittest.TestCase):
                 self.assertEqual(paye, hmrc)
 
 
-class test_rest_gen_w1m1_mthly(unittest.TestCase):
+class TestRestGenW1m1Mthly(unittest.TestCase):
     payslips = []
 
     def setUp(self) -> None:
@@ -88,7 +93,7 @@ class test_rest_gen_w1m1_mthly(unittest.TestCase):
                 self.assertEqual(paye, hmrc)
 
 
-class test_rest_gen_w1m1_wkly(unittest.TestCase):
+class TestRestGenW1m1Wkly(unittest.TestCase):
     payslips = []
 
     def setUp(self) -> None:
@@ -103,7 +108,7 @@ class test_rest_gen_w1m1_wkly(unittest.TestCase):
                 self.assertEqual(paye, hmrc)
 
 
-class test_rest_br_mthly(unittest.TestCase):
+class TestRestBrMthly(unittest.TestCase):
     payslips = []
 
     def setUp(self) -> None:
@@ -116,7 +121,7 @@ class test_rest_br_mthly(unittest.TestCase):
                 self.assertEqual(paye, hmrc)
 
 
-class test_rest_br_wkly(unittest.TestCase):
+class TestRestBrWkly(unittest.TestCase):
     payslips = []
 
     def setUp(self) -> None:
@@ -129,7 +134,7 @@ class test_rest_br_wkly(unittest.TestCase):
                 self.assertEqual(paye, hmrc)
 
 
-class test_rest_k_cumul_mthly(unittest.TestCase):
+class TestRestKCumulMthly(unittest.TestCase):
     payslips = []
 
     def setUp(self) -> None:
@@ -144,7 +149,7 @@ class test_rest_k_cumul_mthly(unittest.TestCase):
                 self.assertEqual(paye, hmrc)
 
 
-class test_rest_k_cumul_wkly(unittest.TestCase):
+class TestRestKCumulWkly(unittest.TestCase):
     payslips = []
 
     def setUp(self) -> None:
@@ -159,7 +164,7 @@ class test_rest_k_cumul_wkly(unittest.TestCase):
                 self.assertEqual(paye, hmrc)
 
 
-class test_rest_k_w1m1_mthly(unittest.TestCase):
+class TestRestKW1m1Mthly(unittest.TestCase):
     payslips = []
 
     def setUp(self) -> None:
@@ -174,7 +179,7 @@ class test_rest_k_w1m1_mthly(unittest.TestCase):
                 self.assertEqual(paye, hmrc)
 
 
-class test_rest_k_w1m1_wkly(unittest.TestCase):
+class TestRestKW1m1Wkly(unittest.TestCase):
     payslips = []
 
     def setUp(self) -> None:
@@ -187,7 +192,7 @@ class test_rest_k_w1m1_wkly(unittest.TestCase):
                 self.assertEqual(paye, hmrc)
 
 
-class test_rest_large_code_mthly(unittest.TestCase):
+class TestRestLargeCodeMthly(unittest.TestCase):
     payslips = []
 
     def setUp(self) -> None:
@@ -202,7 +207,7 @@ class test_rest_large_code_mthly(unittest.TestCase):
                 self.assertEqual(paye, hmrc)
 
 
-class test_rest_large_code_wkly(unittest.TestCase):
+class TestRestLargeCodeWkly(unittest.TestCase):
     payslips = []
 
     def setUp(self) -> None:
@@ -220,7 +225,7 @@ class test_rest_large_code_wkly(unittest.TestCase):
 ################ SCOTTISH TAX CODES #########################
 
 
-class test_scottish_gen_cumul_mthly(unittest.TestCase):
+class TestScottishGenCumulMthly(unittest.TestCase):
     payslips = []
 
     def setUp(self) -> None:
@@ -235,7 +240,7 @@ class test_scottish_gen_cumul_mthly(unittest.TestCase):
                 self.assertEqual(paye, hmrc)
 
 
-class test_scottish_gen_cumul_wkly(unittest.TestCase):
+class TestScottishGenCumulWkly(unittest.TestCase):
     payslips = []
 
     def setUp(self) -> None:
@@ -250,7 +255,7 @@ class test_scottish_gen_cumul_wkly(unittest.TestCase):
                 self.assertEqual(paye, hmrc)
 
 
-class test_scottish_gen_w1m1_mthly(unittest.TestCase):
+class TestScottishGenW1m1Mthly(unittest.TestCase):
     payslips = []
 
     def setUp(self) -> None:
@@ -265,7 +270,7 @@ class test_scottish_gen_w1m1_mthly(unittest.TestCase):
                 self.assertEqual(paye, hmrc)
 
 
-class test_scottish_gen_w1m1_wkly(unittest.TestCase):
+class TestScottishGenW1m1Wkly(unittest.TestCase):
     payslips = []
 
     def setUp(self) -> None:
@@ -280,7 +285,7 @@ class test_scottish_gen_w1m1_wkly(unittest.TestCase):
                 self.assertEqual(paye, hmrc)
 
 
-class test_scottish_k_cumul_mthly(unittest.TestCase):
+class TestScottishKCumulMthly(unittest.TestCase):
     payslips = []
 
     def setUp(self) -> None:
@@ -295,7 +300,7 @@ class test_scottish_k_cumul_mthly(unittest.TestCase):
                 self.assertEqual(paye, hmrc)
 
 
-class test_scottish_k_cumul_wkly(unittest.TestCase):
+class TestScottishKCumulWkly(unittest.TestCase):
     payslips = []
 
     def setUp(self) -> None:
@@ -313,7 +318,7 @@ class test_scottish_k_cumul_wkly(unittest.TestCase):
 ################ WELSH TAX CODES #########################
 
 
-class test_welsh_gen_cumul_mthly(unittest.TestCase):
+class TestWelshGenCumulMthly(unittest.TestCase):
     payslips = []
 
     def setUp(self) -> None:
@@ -328,7 +333,7 @@ class test_welsh_gen_cumul_mthly(unittest.TestCase):
                 self.assertEqual(paye, hmrc)
 
 
-class test_welsh_gen_cumul_wkly(unittest.TestCase):
+class TestWelshGenCumulWkly(unittest.TestCase):
     payslips = []
 
     def setUp(self) -> None:
@@ -343,7 +348,7 @@ class test_welsh_gen_cumul_wkly(unittest.TestCase):
                 self.assertEqual(paye, hmrc)
 
 
-class test_welsh_gen_w1m1_mthly(unittest.TestCase):
+class TestWelshGenW1m1Mthly(unittest.TestCase):
     payslips = []
 
     def setUp(self) -> None:
@@ -358,7 +363,7 @@ class test_welsh_gen_w1m1_mthly(unittest.TestCase):
                 self.assertEqual(paye, hmrc)
 
 
-class test_welsh_gen_w1m1_wkly(unittest.TestCase):
+class TestWelshGenW1m1Wkly(unittest.TestCase):
     payslips = []
 
     def setUp(self) -> None:
@@ -375,33 +380,33 @@ class test_welsh_gen_w1m1_wkly(unittest.TestCase):
 
 def monthly():
     suite = unittest.TestSuite()
-    suite.addTest(test_rest_gen_cumul_mthly('test_periods'))
-    suite.addTest(test_rest_gen_w1m1_mthly('test_periods'))
-    suite.addTest(test_rest_br_mthly('test_periods'))
-    suite.addTest(test_rest_k_cumul_mthly('test_periods'))
-    suite.addTest(test_rest_k_w1m1_mthly('test_periods'))
-    suite.addTest(test_rest_large_code_mthly('test_periods'))
-    suite.addTest(test_scottish_gen_cumul_mthly('test_periods'))
-    suite.addTest(test_scottish_gen_w1m1_mthly('test_periods'))
-    suite.addTest(test_scottish_k_cumul_mthly('test_periods'))
-    suite.addTest(test_welsh_gen_cumul_mthly('test_periods'))
-    suite.addTest(test_welsh_gen_w1m1_mthly('test_periods'))
+    suite.addTest(TestRestGenCumulMthly('test_periods'))
+    suite.addTest(TestRestGenW1m1Mthly('test_periods'))
+    suite.addTest(TestRestBrMthly('test_periods'))
+    suite.addTest(TestRestKCumulMthly('test_periods'))
+    suite.addTest(TestRestKW1m1Mthly('test_periods'))
+    suite.addTest(TestRestLargeCodeMthly('test_periods'))
+    suite.addTest(TestScottishGenCumulMthly('test_periods'))
+    suite.addTest(TestScottishGenW1m1Mthly('test_periods'))
+    suite.addTest(TestScottishKCumulMthly('test_periods'))
+    suite.addTest(TestWelshGenCumulMthly('test_periods'))
+    suite.addTest(TestWelshGenW1m1Mthly('test_periods'))
     return suite
 
 
 def weekly():
     suite = unittest.TestSuite()
-    suite.addTest(test_rest_gen_cumul_wkly('test_periods'))
-    suite.addTest(test_rest_gen_w1m1_wkly('test_periods'))
-    suite.addTest(test_rest_br_wkly('test_periods'))
-    suite.addTest(test_rest_k_cumul_wkly('test_periods'))
-    suite.addTest(test_rest_k_w1m1_wkly('test_periods'))
-    suite.addTest(test_rest_large_code_wkly('test_periods'))
-    suite.addTest(test_scottish_gen_cumul_wkly('test_periods'))
-    suite.addTest(test_scottish_gen_w1m1_wkly('test_periods'))
-    suite.addTest(test_scottish_k_cumul_wkly('test_periods'))
-    suite.addTest(test_welsh_gen_cumul_wkly('test_periods'))
-    suite.addTest(test_welsh_gen_w1m1_wkly('test_periods'))
+    suite.addTest(TestRestGenCumulWkly('test_periods'))
+    suite.addTest(TestRestGenW1m1Wkly('test_periods'))
+    suite.addTest(TestRestBrWkly('test_periods'))
+    suite.addTest(TestRestKCumulWkly('test_periods'))
+    suite.addTest(TestRestKW1m1Wkly('test_periods'))
+    suite.addTest(TestRestLargeCodeWkly('test_periods'))
+    suite.addTest(TestScottishGenCumulWkly('test_periods'))
+    suite.addTest(TestScottishGenW1m1Wkly('test_periods'))
+    suite.addTest(TestScottishKCumulWkly('test_periods'))
+    suite.addTest(TestWelshGenCumulWkly('test_periods'))
+    suite.addTest(TestWelshGenW1m1Wkly('test_periods'))
     return suite
 
 
