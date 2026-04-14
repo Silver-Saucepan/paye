@@ -310,7 +310,7 @@ def str_to_decimal(amount: str) -> Decimal:
     return Decimal(re.sub(r'[^+\-.0-9]', '', amount))
 
 
-def __taxable_pay_to_date(
+def _taxable_pay_to_date(
     period: int,
     code: TaxCode,
     cumulative_pay_to_date: Decimal,
@@ -330,7 +330,7 @@ def __taxable_pay_to_date(
     return U_n
 
 
-def __tax_due_to_date(
+def _tax_due_to_date(
     year: int,
     period: int,
     code: TaxCode,
@@ -381,7 +381,7 @@ def __tax_due_to_date(
     return L_n
 
 
-def __tax_due_cumulative(
+def _tax_due_cumulative(
     year: int,
     period: int,
     code: TaxCode,
@@ -395,10 +395,10 @@ def __tax_due_cumulative(
     # to the calling function which provides P_n
 
     # 4.3 Stage 2 Calculation of Taxable Pay to date U_n
-    U_n = __taxable_pay_to_date(period=period, code=code, cumulative_pay_to_date=P_n)
+    U_n = _taxable_pay_to_date(period=period, code=code, cumulative_pay_to_date=P_n)
 
     # 4.4 Stage 3 Calculation of tax due to date L_n
-    L_n = __tax_due_to_date(period=period, code=code, taxable_pay_to_date=U_n, year=year)
+    L_n = _tax_due_to_date(period=period, code=code, taxable_pay_to_date=U_n, year=year)
 
     # 4.5 Stage 4 Calculation of Tax Deduction or Refund
     maxrate = CONSTANTS[year]['M'] * (p_n - pbik)
@@ -410,7 +410,7 @@ def __tax_due_cumulative(
     return l_n
 
 
-def __tax_due_month1(
+def _tax_due_month1(
     year: int,
     code: TaxCode,
     p_n: Decimal,
@@ -426,7 +426,7 @@ def __tax_due_month1(
     U_n = p_n - code.free_pay_w1m1()
 
     # Stage 2: Tax due, section 8.3
-    L_n = __tax_due_to_date(year=year, period=1, code=code, taxable_pay_to_date=U_n)
+    L_n = _tax_due_to_date(year=year, period=1, code=code, taxable_pay_to_date=U_n)
     l_n = L_n - 0
     maxrate = CONSTANTS[year]['M'] * (p_n - pbik)
     l_n = min(
@@ -455,7 +455,7 @@ def tax_due(payslip: Payslip, tax_to_date: Decimal) -> Decimal:
     if payslip.year not in CONSTANTS:
         raise ValueError(f"HMRC constants for year {payslip.year} is missing")
     if payslip.code.is_cumulative():
-        return __tax_due_cumulative(
+        return _tax_due_cumulative(
             year=payslip.year,
             period=payslip.period,
             code=payslip.code,
@@ -465,7 +465,7 @@ def tax_due(payslip: Payslip, tax_to_date: Decimal) -> Decimal:
             pbik=payslip.pbik,
         )
     else:
-        return __tax_due_month1(
+        return _tax_due_month1(
             year=payslip.year,
             code=payslip.code,
             p_n=payslip.total_gross,
