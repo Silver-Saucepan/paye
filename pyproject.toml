@@ -30,6 +30,14 @@ dev = ["build"]
 [tool.hatch.version]
 path = "src/paye/__about__.py"
 
+[tool.hatch.envs.test]
+dependencies = [
+  "pytest",
+  "pytest-cov",
+  "pandas",
+  "openpyxl",
+]
+
 [tool.ruff]
 line-length = 100
 
