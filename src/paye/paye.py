@@ -238,6 +238,9 @@ class Payslip:
     _income_tax: Decimal = field(init=False)
     _other_deductions: list[Decimal] = field(init=False, default_factory=list)
 
+    # FIXME: _pay_adjustments defaults to zero, total_gross should be read-only
+    # clients then have to set basic_pay rather than total_gross.
+    
     @property
     def basic_pay(self) -> Decimal:
         return self._basic_pay
