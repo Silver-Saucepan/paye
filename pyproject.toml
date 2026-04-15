@@ -30,7 +30,8 @@ dev = ["build"]
 [tool.hatch.version]
 path = "src/paye/__about__.py"
 
-[tool.hatch.envs.test]
+[tool.hatch.envs.hatch-test]
+extra-args = ["-v"]
 dependencies = [
   "pytest",
   "pytest-cov",
