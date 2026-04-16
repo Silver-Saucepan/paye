@@ -98,7 +98,7 @@ class TaxCode:
         prefix: 'BR', 'NT', '0T', 'D', 'K' or none
         numeric_part: The numbers used to calculate tax-free amount
         suffix: Indicates various conditions like Personal Allowance
-        basis: Cumulative or month 1
+        basis: Cumulative or week1/month 1
     """
 
     nation: str | None
@@ -393,7 +393,7 @@ def _tax_due_cumulative(
     L_n_1: Decimal,
     pbik: Decimal,
 ) -> Decimal:
-    """Calculate the income tax due for cumulative suffix codes and cumulative prefix k, - employees paid monthly."""
+    """Calculate the income tax due for cumulative suffix codes and cumulative prefix k."""
     # 4.2 Stage 1 Calculation of Cumulative Pay to date is delegated
     # to the calling function which provides P_n
 
@@ -413,19 +413,19 @@ def _tax_due_cumulative(
     return l_n
 
 
-def _tax_due_month1(
+def _tax_due_w1m1(
     year: int,
     code: TaxCode,
     p_n: Decimal,
     pbik: Decimal,
 ) -> Decimal:
-    """Calculate the tax due on a 'Month 1' basis.
+    """Calculate the tax due on a 'Week 1/Month 1' basis.
 
     Each payment is treated IN ISOLATION, as if it were the first
     payment of the Income Tax year to be taxed on a normal suffix or
     prefix K code.
     """
-    # Stage 1: Taxable pay for the month, section 8.2
+    # Stage 1: Taxable pay for the weeek/month, section 8.2
     U_n = p_n - code.free_pay_w1m1()
 
     # Stage 2: Tax due, section 8.3
@@ -440,7 +440,7 @@ def _tax_due_month1(
 
 
 def tax_due(payslip: Payslip, tax_to_date: Decimal) -> Decimal:
-    """Calculate the tax due for employees paid monthly
+    """Calculate the tax due
 
     Args:
         payslip: Populated with year, period, code, gross, gross to date and any benefits in kind
@@ -468,7 +468,7 @@ def tax_due(payslip: Payslip, tax_to_date: Decimal) -> Decimal:
             pbik=payslip.pbik,
         )
     else:
-        return _tax_due_month1(
+        return _tax_due_w1m1(
             year=payslip.year,
             code=payslip.code,
             p_n=payslip.total_gross,
