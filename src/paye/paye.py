@@ -294,7 +294,10 @@ def uk_tax_period_start_date(tax_year: int, tax_period: int) -> datetime.date:
         The start date of the tax period
     """
     q, r = divmod(tax_period + 3, 12)
-    d = datetime.date(year=tax_year + q, month=r, day=6)
+    if q == 1 and r == 0:
+        d = datetime.date(year=tax_year, month=12, day=6)
+    else:
+        d = datetime.date(year=tax_year + q, month=r, day=6)
     return d
 
 
