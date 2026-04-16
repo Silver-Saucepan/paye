@@ -292,13 +292,15 @@ def uk_tax_period_start_date(tax_year: int, tax_period: int) -> datetime.date:
 
     Returns:
         The start date of the tax period
+
+    Raises:
+        ValueError if tax_period not in range 1..12
     """
-    q, r = divmod(tax_period + 3, 12)
-    if q == 1 and r == 0:
-        d = datetime.date(year=tax_year, month=12, day=6)
-    else:
-        d = datetime.date(year=tax_year + q, month=r, day=6)
-    return d
+    if not 1 <= tax_period <= 12:
+        raise ValueError('tax_period must be in the range 1..12')
+
+    q, r = divmod(tax_period + 2, 12)
+    return datetime.date(year=tax_year + q, month=r + 1, day=6)
 
 
 def str_to_decimal(amount: str) -> Decimal:
