@@ -101,12 +101,6 @@ class TaxCode:
         basis: Cumulative or week1/month 1
     """
 
-    nation: str | None
-    prefix: str | None
-    numeric_part: str | None
-    suffix: str | None
-    basis: str
-
     def __init__(self, code: str) -> None:
         """Parse a tax code into its component parts and check for unsupported features
 
