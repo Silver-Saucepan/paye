@@ -106,6 +106,9 @@ class TaxCode:
 
         Args:
             code: The tax code as a string
+
+        Raises:
+            ValueError if code is not a valid Tax Code
         """
         self.code = code.strip()
         if self.code:
@@ -238,7 +241,7 @@ class Payslip:
 
     # FIXME: _pay_adjustments defaults to zero, total_gross should be read-only
     # clients then have to set basic_pay rather than total_gross.
-    
+
     @property
     def basic_pay(self) -> Decimal:
         return self._basic_pay
