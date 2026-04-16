@@ -29,7 +29,7 @@ from importlib import resources
 from typing import Any, Final, final
 
 TAX_CODE_REGEX: Final[str] = (
-    r'^(?P<nation>[SC])?(?P<prefix>BR|NT|0T|D|K)?(?P<numeric>\d*)(?P<suffix>[LMNTPY])?[\s/]*(?P<basis>[\w ]*)'
+    r'^(?P<nation>[SC])?(?P<prefix>BR|NT|0T|D|K)?(?P<numeric>\d*)(?P<suffix>[LMNTPY])?[\s/]*(?P<basis>[\w ]*)$'
 )
 # Meaning of the groups:
 # Group 1: Indicates if Scottish (S) or Welsh (C for Cymru) rules apply
@@ -118,6 +118,8 @@ class TaxCode:
             p = re.compile(TAX_CODE_REGEX)
             r = p.match(self.code)
             if r:
+                if r.group('basis') == self.code:
+                    raise ValueError(f'Invalid tax code: {self.code}')
                 (
                     self.nation,
                     self.prefix,
@@ -125,6 +127,8 @@ class TaxCode:
                     self.suffix,
                     self.basis,
                 ) = r.groups()
+            else:
+                raise ValueError(f'Invalid tax code: {self.code}')
 
     def __str__(self):
         return f"""Tax code {self.code}
