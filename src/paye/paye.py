@@ -206,81 +206,65 @@ class TaxCode:
 class Payslip:
     """Payslip Model
 
-    Attributes:
-        payer_name (str): Name of organisation making payment
+    Attributes used for all codes:
         year (int): The calendar year in which the tax year starts
-        period (int): The tax period (1 to 52)
         code (TaxCode): The tax code provided by HMRC
-        pay_to_date (Decimal): The pay received this tax year (including this period)
-        tax_to_date (Decimal): The tax paid this tax year (including this period)
-        pbik (Decimal): payrolled benefits in kind
-
-    Properties:
         basic_pay (Decimal): The basic pay
+        pay_adjustments (list[Decimal]): Adjustments to basic_pay. Default = £0.00
+        pbik (Decimal): payrolled benefits in kind. Default = £0.00
+
+    Attributes used for cumulative codes only:
+        period (int): The tax period (1 to 12 or 52)
+        pay_to_date (Decimal): The pay received this tax year (including this period)
+
+    Attributes for printing payslip only:
         income_tax (Decimal): The income tax deducted this period
-        pay_adjustment (Decimal): Adjustment to basic_pay
+        tax_to_date (Decimal): The tax paid this tax year (including this period)
         other_deductions (Decimal): Other deductions
+        payer_name (str): Name of organisation making payment
+        payroll_reference (str): Payer's reference number
+        pay_date (datetime.date): The pay date
+
+    Properties (all are read-only):
+        total_gross (Decimal): basic_pay + pay_adjustments
+        total_deductions (Decimal): income_tax + other_deductions
+        net_pay (Decimal): total_gross - total_deductions
 
     """
 
-    payer_name: str
     year: int
-    period: int
+    basic_pay: Decimal
     code: TaxCode
-    pay_to_date: Decimal
-    tax_to_date: Decimal
-    pay_date: datetime.date = datetime.date(1970, 1, 1)
+    pay_adjustments: list[Decimal] = field(default_factory=list[Decimal('0.0')])
     pbik: Decimal = Decimal('0.00')
-    total_gross: Decimal = field(init=False, default=Decimal('0.00'))
-    total_deductions: Decimal = field(init=False, default=Decimal('0.00'))
-    net_pay: Decimal = field(init=False)
-    _basic_pay: Decimal = field(init=False)
-    _pay_adjustments: list[Decimal] = field(init=False, default_factory=list)
-    _income_tax: Decimal = field(init=False)
-    _other_deductions: list[Decimal] = field(init=False, default_factory=list)
 
-    # FIXME: _pay_adjustments defaults to zero, total_gross should be read-only
-    # clients then have to set basic_pay rather than total_gross.
+    period: int = 0
+    pay_to_date: Decimal = Decimal('0.00')
 
-    @property
-    def basic_pay(self) -> Decimal:
-        return self._basic_pay
+    income_tax: Decimal = Decimal('0.00')
+    tax_to_date: Decimal = Decimal('0.00')
+    other_deductions: list[Decimal] = field(default_factory=list[Decimal('0.0')])
+    payer_name: str = ''
+    payroll_reference: str = ''
+    pay_date: datetime.date = datetime.date(1970, 1, 1)
 
-    @basic_pay.setter
-    def basic_pay(self, value: Decimal) -> None:
-        self._basic_pay = value
-        self.total_gross = self._basic_pay + sum(self._pay_adjustments)
-        self.net_pay = self.total_gross - self.total_deductions
+    def post_init(self) -> None:
+        if self.code.is_cumulative and not 1 <= self.period <= N_PERIODS:
+            raise ValueError(
+                f"Period number in range 1..{N_PERIODS} is required for cumulative tax code"
+            )
 
     @property
-    def pay_adjustments(self) -> list[Decimal]:
-        return self._pay_adjustments
-
-    @pay_adjustments.setter
-    def pay_adjustments(self, value: list[Decimal]) -> None:
-        self._pay_adjustments = value
-        self.total_gross = self._basic_pay + sum(self._pay_adjustments)
-        self.net_pay = self.total_gross - self.total_deductions
+    def total_gross(self) -> Decimal:
+        return self.basic_pay + sum(self.pay_adjustments)
 
     @property
-    def income_tax(self) -> Decimal:
-        return self._income_tax
-
-    @income_tax.setter
-    def income_tax(self, value: Decimal) -> None:
-        self._income_tax = value
-        self.total_deductions = self._income_tax + sum(self._other_deductions)
-        self.net_pay = self.total_gross - self.total_deductions
+    def total_deductions(self) -> Decimal:
+        return self.income_tax + sum(self.other_deductions)
 
     @property
-    def other_deductions(self) -> list[Decimal]:
-        return self._other_deductions
-
-    @other_deductions.setter
-    def other_deductions(self, value: list[Decimal]):
-        self._other_deductions = value
-        self.total_deductions = self._income_tax + sum(self._other_deductions)
-        self.net_pay = self.total_gross - self.total_deductions
+    def net_pay(self) -> Decimal:
+        return self.total_gross - self.total_deductions
 
 
 def uk_tax_period_start_date(tax_year: int, tax_period: int) -> datetime.date:
