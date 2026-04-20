@@ -206,30 +206,27 @@ class TaxCode:
 class Payslip:
     """Payslip Model
 
-    Attributes used for all codes:
+    Attributes used for all tax codes:
         year (int): The calendar year in which the tax year starts
-        code (TaxCode): The tax code provided by HMRC
         basic_pay (Decimal): The basic pay
+        code (TaxCode): The tax code provided by HMRC
         pay_adjustments (list[Decimal]): Adjustments to basic_pay. Default = £0.00
         pbik (Decimal): payrolled benefits in kind. Default = £0.00
 
-    Attributes used for cumulative codes only:
+    Attributes used for cumulative tax codes only:
         period (int): The tax period (1 to 12 or 52)
         pay_to_date (Decimal): The pay received this tax year (including this period)
+        tax_to_date_non_inclusive (Decimal): Income tax paid this fiscal year, not including this period
 
-    Attributes for printing payslip only:
-        income_tax (Decimal): The income tax deducted this period
-        tax_to_date (Decimal): The tax paid this tax year (including this period)
+    Other attributes
         other_deductions (Decimal): Other deductions
-        payer_name (str): Name of organisation making payment
-        payroll_reference (str): Payer's reference number
-        pay_date (datetime.date): The pay date
 
     Properties (all are read-only):
         total_gross (Decimal): basic_pay + pay_adjustments
+        income_tax (Decimal): The income tax to be deducted this period
         total_deductions (Decimal): income_tax + other_deductions
         net_pay (Decimal): total_gross - total_deductions
-
+        tax_to_date (Decimal): tax_to_date_non_inclusive + income_tax
     """
 
     year: int
@@ -239,20 +236,25 @@ class Payslip:
     pbik: Decimal = Decimal('0.00')
 
     period: int = 0
-    pay_to_date: Decimal = Decimal('0.00')
+    pay_to_date: Decimal | None = None
+    tax_to_date_non_inclusive: Decimal | None = None
 
-    income_tax: Decimal = Decimal('0.00')
-    tax_to_date: Decimal = Decimal('0.00')
     other_deductions: list[Decimal] = field(default_factory=list[Decimal('0.0')])
-    payer_name: str = ''
-    payroll_reference: str = ''
-    pay_date: datetime.date = datetime.date(1970, 1, 1)
 
-    def post_init(self) -> None:
-        if self.code.is_cumulative and not 1 <= self.period <= N_PERIODS:
-            raise ValueError(
-                f"Period number in range 1..{N_PERIODS} is required for cumulative tax code"
-            )
+    def __post_init__(self) -> None:
+        if self.code.is_cumulative():
+            if not 1 <= self.period <= N_PERIODS:
+                raise ValueError(
+                    f"Period number in range 1..{N_PERIODS} is required for cumulative tax code"
+                )
+            if self.pay_to_date is None:
+                raise ValueError(
+                    "Pay to date is required for cumulative tax codes"
+                )
+            if self.tax_to_date_non_inclusive is None:
+                raise ValueError(
+                    "Tax to date non-inclusive is required for cumulative tax codes"
+                )
 
     @property
     def total_gross(self) -> Decimal:
@@ -265,6 +267,172 @@ class Payslip:
     @property
     def net_pay(self) -> Decimal:
         return self.total_gross - self.total_deductions
+
+    @property
+    def tax_to_date(self) -> Decimal:
+        if self.code.is_cumulative():
+            return self.tax_to_date_non_inclusive + self.income_tax  # type: ignore
+        else:
+            return self.income_tax
+
+    @staticmethod
+    def _taxable_pay_to_date(
+        period: int,
+        code: TaxCode,
+        cumulative_pay_to_date: Decimal,
+    ) -> Decimal:
+        """Stage 2: Calculation of Taxable Pay to date (section 4.3)."""
+        if code.is_nt():
+            U_n = cumulative_pay_to_date
+        elif code.d_index() is not None:
+            U_n = cumulative_pay_to_date
+        else:
+            # Free pay or Additional pay for Month n
+            na_1 = code.free_pay_w1m1() * period
+
+            # 4.3.2 Calculation of Taxable Pay to date, U_n
+            U_n = cumulative_pay_to_date - na_1
+
+        return U_n
+
+    @staticmethod
+    def _tax_due_to_date(
+        year: int,
+        period: int,
+        code: TaxCode,
+        taxable_pay_to_date: Decimal,
+    ) -> Decimal:
+        """Stage 3: Calculation of tax due to date (section 4.4)."""
+        # 4.4.4 round down to nearest pound
+        # Added Decimal('0.00') to restore two decimal points
+        T_n = taxable_pay_to_date.quantize(Decimal('0'), rounding=ROUND_FLOOR) + Decimal('0.00')
+
+        if code.is_nt():
+            L_n = Decimal('0.00')
+        elif taxable_pay_to_date <= 0:
+            # 4.3.3 No tax liability if Free Pay exceeds Taxable Pay
+            L_n = Decimal('0.00')  # L_n, or Tax due to date is zero
+        elif code.is_br():
+            # Section 5.4, whole of rounded pay to date taxed at rate G
+            L_n = T_n * basic_rate(code, year)
+        elif code.d_index() is not None:
+            # Section 6: Whole of taxable pay taxed at Higher or Additional rate
+            L_n = T_n * additional_rate(code, year)
+        else:
+            # Threshold values, Definition 9
+            cs = [
+                C * period / N_PERIODS
+                for C in CONSTANTS[year][('S' if code.nation == 'S' else '') + 'C']
+            ]
+
+            # Rounded threshold taxes, Definition 10
+            vs = [c.quantize(Decimal('0'), rounding=ROUND_CEILING) for c in cs]
+
+            # Threshold taxes, Definition 11
+            ks = [
+                K * period / N_PERIODS
+                for K in CONSTANTS[year][('S' if code.nation == 'S' else '') + 'K']
+            ]
+
+            rates = tax_rates(code, year)
+
+            L_n = ks[-1] + (T_n - cs[-1]) * rates[-1]
+            for v, k, c, r in zip(vs[1:], ks[0:], cs[0:], rates[1:]):
+                if taxable_pay_to_date <= v:
+                    L_n = k + (T_n - c) * r
+                    break
+
+            L_n = L_n.quantize(Decimal('0.00'), rounding=ROUND_FLOOR)
+
+        return L_n
+
+    def _tax_due_w1m1(
+        self,
+        year: int,
+        code: TaxCode,
+        p_n: Decimal,
+        pbik: Decimal,
+    ) -> Decimal:
+        """Calculate the tax due on a 'Week 1/Month 1' basis.
+
+        Each payment is treated IN ISOLATION, as if it were the first
+        payment of the Income Tax year to be taxed on a normal suffix or
+        prefix K code.
+        """
+        # Stage 1: Taxable pay for the weeek/month, section 8.2
+        U_n = p_n - code.free_pay_w1m1()
+
+        # Stage 2: Tax due, section 8.3
+        L_n = self._tax_due_to_date(year=year, period=1, code=code, taxable_pay_to_date=U_n)
+        l_n = L_n - 0
+        maxrate = CONSTANTS[year]['M'] * (p_n - pbik)
+        l_n = min(
+            l_n,
+            maxrate,
+        ).quantize(Decimal('0.00'), rounding=ROUND_FLOOR)
+        return l_n
+
+    def _tax_due_cumulative(
+        self,
+        year: int,
+        period: int,
+        code: TaxCode,
+        p_n: Decimal,
+        P_n: Decimal,
+        L_n_1: Decimal,
+        pbik: Decimal,
+    ) -> Decimal:
+        """Calculate the income tax due for cumulative suffix codes and cumulative prefix k."""
+        # 4.2 Stage 1 Calculation of Cumulative Pay to date is delegated
+        # to the calling function which provides P_n
+
+        # 4.3 Stage 2 Calculation of Taxable Pay to date U_n
+        U_n = self._taxable_pay_to_date(period=period, code=code, cumulative_pay_to_date=P_n)
+
+        # 4.4 Stage 3 Calculation of tax due to date L_n
+        L_n = self._tax_due_to_date(period=period, code=code, taxable_pay_to_date=U_n, year=year)
+
+        # 4.5 Stage 4 Calculation of Tax Deduction or Refund
+        maxrate = CONSTANTS[year]['M'] * (p_n - pbik)
+        l_n = min(
+            L_n - L_n_1,
+            maxrate,
+        ).quantize(Decimal('0.00'), rounding=ROUND_FLOOR)
+
+        return l_n
+
+    @property
+    def income_tax(self) -> Decimal:
+        """Calculate the tax due
+
+        Returns:
+            Income tax due for this tax period
+
+        Raises:
+            ValueError: If the HMRC constants are not available for the tax year
+        """
+
+        if self.total_gross.is_nan():
+            return Decimal('NaN')
+        if self.year not in CONSTANTS:
+            raise ValueError(f"HMRC constants for year {self.year} are missing")
+        if self.code.is_cumulative():
+            return self._tax_due_cumulative(
+                year=self.year,
+                period=self.period,
+                code=self.code,
+                p_n=self.total_gross,
+                P_n=self.pay_to_date,  # type: ignore
+                L_n_1=self.tax_to_date_non_inclusive,  # type: ignore
+                pbik=self.pbik,
+            )
+        else:
+            return self._tax_due_w1m1(
+                year=self.year,
+                code=self.code,
+                p_n=self.total_gross,
+                pbik=self.pbik,
+            )
 
 
 def uk_tax_period_start_date(tax_year: int, tax_period: int) -> datetime.date:
@@ -301,169 +469,6 @@ def str_to_decimal(amount: str) -> Decimal:
     if amount == '#N/A':
         return Decimal('NaN')
     return Decimal(re.sub(r'[^+\-.0-9]', '', amount))
-
-
-def _taxable_pay_to_date(
-    period: int,
-    code: TaxCode,
-    cumulative_pay_to_date: Decimal,
-) -> Decimal:
-    """Stage 2: Calculation of Taxable Pay to date (section 4.3)."""
-    if code.is_nt():
-        U_n = cumulative_pay_to_date
-    elif code.d_index() is not None:
-        U_n = cumulative_pay_to_date
-    else:
-        # Free pay or Additional pay for Month n
-        na_1 = code.free_pay_w1m1() * period
-
-        # 4.3.2 Calculation of Taxable Pay to date, U_n
-        U_n = cumulative_pay_to_date - na_1
-
-    return U_n
-
-
-def _tax_due_to_date(
-    year: int,
-    period: int,
-    code: TaxCode,
-    taxable_pay_to_date: Decimal,
-) -> Decimal:
-    """Stage 3: Calculation of tax due to date (section 4.4)."""
-    # 4.4.4 round down to nearest pound
-    # Added Decimal('0.00') to restore two decimal points
-    T_n = taxable_pay_to_date.quantize(Decimal('0'), rounding=ROUND_FLOOR) + Decimal('0.00')
-
-    if code.is_nt():
-        L_n = Decimal('0.00')
-    elif taxable_pay_to_date <= 0:
-        # 4.3.3 No tax liability if Free Pay exceeds Taxable Pay
-        L_n = Decimal('0.00')  # L_n, or Tax due to date is zero
-    elif code.is_br():
-        # Section 5.4, whole of rounded pay to date taxed at rate G
-        L_n = T_n * basic_rate(code, year)
-    elif code.d_index() is not None:
-        # Section 6: Whole of taxable pay taxed at Higher or Additional rate
-        L_n = T_n * additional_rate(code, year)
-    else:
-        # Threshold values, Definition 9
-        cs = [
-            C * period / N_PERIODS
-            for C in CONSTANTS[year][('S' if code.nation == 'S' else '') + 'C']
-        ]
-
-        # Rounded threshold taxes, Definition 10
-        vs = [c.quantize(Decimal('0'), rounding=ROUND_CEILING) for c in cs]
-
-        # Threshold taxes, Definition 11
-        ks = [
-            K * period / N_PERIODS
-            for K in CONSTANTS[year][('S' if code.nation == 'S' else '') + 'K']
-        ]
-
-        rates = tax_rates(code, year)
-
-        L_n = ks[-1] + (T_n - cs[-1]) * rates[-1]
-        for v, k, c, r in zip(vs[1:], ks[0:], cs[0:], rates[1:]):
-            if taxable_pay_to_date <= v:
-                L_n = k + (T_n - c) * r
-                break
-
-        L_n = L_n.quantize(Decimal('0.00'), rounding=ROUND_FLOOR)
-
-    return L_n
-
-
-def _tax_due_cumulative(
-    year: int,
-    period: int,
-    code: TaxCode,
-    p_n: Decimal,
-    P_n: Decimal,
-    L_n_1: Decimal,
-    pbik: Decimal,
-) -> Decimal:
-    """Calculate the income tax due for cumulative suffix codes and cumulative prefix k."""
-    # 4.2 Stage 1 Calculation of Cumulative Pay to date is delegated
-    # to the calling function which provides P_n
-
-    # 4.3 Stage 2 Calculation of Taxable Pay to date U_n
-    U_n = _taxable_pay_to_date(period=period, code=code, cumulative_pay_to_date=P_n)
-
-    # 4.4 Stage 3 Calculation of tax due to date L_n
-    L_n = _tax_due_to_date(period=period, code=code, taxable_pay_to_date=U_n, year=year)
-
-    # 4.5 Stage 4 Calculation of Tax Deduction or Refund
-    maxrate = CONSTANTS[year]['M'] * (p_n - pbik)
-    l_n = min(
-        L_n - L_n_1,
-        maxrate,
-    ).quantize(Decimal('0.00'), rounding=ROUND_FLOOR)
-
-    return l_n
-
-
-def _tax_due_w1m1(
-    year: int,
-    code: TaxCode,
-    p_n: Decimal,
-    pbik: Decimal,
-) -> Decimal:
-    """Calculate the tax due on a 'Week 1/Month 1' basis.
-
-    Each payment is treated IN ISOLATION, as if it were the first
-    payment of the Income Tax year to be taxed on a normal suffix or
-    prefix K code.
-    """
-    # Stage 1: Taxable pay for the weeek/month, section 8.2
-    U_n = p_n - code.free_pay_w1m1()
-
-    # Stage 2: Tax due, section 8.3
-    L_n = _tax_due_to_date(year=year, period=1, code=code, taxable_pay_to_date=U_n)
-    l_n = L_n - 0
-    maxrate = CONSTANTS[year]['M'] * (p_n - pbik)
-    l_n = min(
-        l_n,
-        maxrate,
-    ).quantize(Decimal('0.00'), rounding=ROUND_FLOOR)
-    return l_n
-
-
-def tax_due(payslip: Payslip, tax_to_date: Decimal) -> Decimal:
-    """Calculate the tax due
-
-    Args:
-        payslip: Populated with year, period, code, gross, gross to date and any benefits in kind
-        tax_to_date: Income tax already paid in periods up to but not including this payslip
-
-    Returns:
-        Income tax due for this tax period
-
-    Raises:
-        ValueError: If the HMRC constants are not available for the tax year
-    """
-
-    if payslip.total_gross.is_nan():
-        return Decimal('NaN')
-    if payslip.year not in CONSTANTS:
-        raise ValueError(f"HMRC constants for year {payslip.year} is missing")
-    if payslip.code.is_cumulative():
-        return _tax_due_cumulative(
-            year=payslip.year,
-            period=payslip.period,
-            code=payslip.code,
-            p_n=payslip.total_gross,
-            P_n=payslip.pay_to_date,
-            L_n_1=tax_to_date,
-            pbik=payslip.pbik,
-        )
-    else:
-        return _tax_due_w1m1(
-            year=payslip.year,
-            code=payslip.code,
-            p_n=payslip.total_gross,
-            pbik=payslip.pbik,
-        )
 
 
 def _constants_from_toml(

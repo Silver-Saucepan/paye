@@ -169,9 +169,9 @@ def test_uk(uk_test_data):
             tax_code,
             period=test_case.period,
             pay_to_date=test_case.gross_to_date,
+            tax_to_date_non_inclusive=test_case.tax_due_to_date - test_case.tax_due
         )
-        tax_due = paye.tax_due(payslip, test_case.tax_due_to_date - test_case.tax_due)
-        assert tax_due == test_case.tax_due
+        assert payslip.income_tax == test_case.tax_due
 
 def test_scotland(scotland_test_data):
     for test_case in scotland_test_data.itertuples():
@@ -182,9 +182,9 @@ def test_scotland(scotland_test_data):
             tax_code,
             period=test_case.period,
             pay_to_date=test_case.gross_to_date,
+            tax_to_date_non_inclusive=test_case.tax_due_to_date - test_case.tax_due
         )
-        tax_due = paye.tax_due(payslip, test_case.tax_due_to_date - test_case.tax_due)
-        assert tax_due == test_case.tax_due
+        assert payslip.income_tax == test_case.tax_due
 
 def test_wales(wales_test_data):
     for test_case in wales_test_data.itertuples():
@@ -195,6 +195,6 @@ def test_wales(wales_test_data):
             tax_code,
             period=test_case.period,
             pay_to_date=test_case.gross_to_date,
+            tax_to_date_non_inclusive=test_case.tax_due_to_date - test_case.tax_due
         )
-        tax_due = paye.tax_due(payslip, test_case.tax_due_to_date - test_case.tax_due)
-        assert tax_due == test_case.tax_due
+        assert payslip.income_tax == test_case.tax_due
