@@ -218,10 +218,12 @@ class Payslip:
         pay_to_date (Decimal): The pay received this tax year (including this period)
         tax_to_date_non_inclusive (Decimal): Income tax paid this fiscal year, not including this period
 
-    Other attributes
+    Other attributes (Not used in tax calculations)
         other_deductions (Decimal): Other deductions
+        payer_name (str): The name of the payer
+        pay_date (datetime.date): The pay date
 
-    Properties (all are read-only):
+    Properties (all read-only):
         total_gross (Decimal): basic_pay + pay_adjustments
         income_tax (Decimal): The income tax to be deducted this period
         total_deductions (Decimal): income_tax + other_deductions
@@ -236,9 +238,11 @@ class Payslip:
     pbik: Decimal = Decimal('0.00')
 
     period: int = 0
-    pay_to_date: Decimal | None = None
-    tax_to_date_non_inclusive: Decimal | None = None
+    pay_to_date: Decimal = Decimal('NaN')
+    tax_to_date_non_inclusive: Decimal = Decimal('NaN')
 
+    payer_name: str = ''
+    pay_date: datetime.date = datetime.date(year=1970, month=1, day=1)
     other_deductions: list[Decimal] = field(default_factory=list[Decimal('0.0')])
 
     def __post_init__(self) -> None:
@@ -247,11 +251,11 @@ class Payslip:
                 raise ValueError(
                     f"Period number in range 1..{N_PERIODS} is required for cumulative tax code"
                 )
-            if self.pay_to_date is None:
+            if self.pay_to_date.is_nan():
                 raise ValueError(
                     "Pay to date is required for cumulative tax codes"
                 )
-            if self.tax_to_date_non_inclusive is None:
+            if self.tax_to_date_non_inclusive.is_nan():
                 raise ValueError(
                     "Tax to date non-inclusive is required for cumulative tax codes"
                 )
