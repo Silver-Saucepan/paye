@@ -26,11 +26,10 @@ import tomllib
 from dataclasses import dataclass, field
 from decimal import ROUND_CEILING, ROUND_FLOOR, Decimal
 from importlib import resources
-from typing import Any, Final, final
+from typing import Any
 
-TAX_CODE_REGEX: Final[str] = (
-    r'^(?P<nation>[SC])?(?P<prefix>BR|NT|0T|D|K)?(?P<numeric>\d*)(?P<suffix>[LMNTPY])?[\s/]*(?P<basis>[\w ]*)$'
-)
+TAX_CODE_REGEX = r'^(?P<nation>[SC])?(?P<prefix>BR|NT|0T|D|K)?(?P<numeric>\d*)(?P<suffix>[LMNTPY])?[\s/]*(?P<basis>[\w ]*)$'
+
 # Meaning of the groups:
 # Group 1: Indicates if Scottish (S) or Welsh (C for Cymru) rules apply
 # Group 2: The Prefix
@@ -88,7 +87,6 @@ def additional_rate(code: TaxCode, year: int) -> Decimal:
         return CONSTANTS[year]['R'][rate_pointer]
 
 
-@final
 class TaxCode:
     """
     Attributes and methods for holding and interrogating HMRC tax codes.
@@ -252,13 +250,9 @@ class Payslip:
                     f"Period number in range 1..{N_PERIODS} is required for cumulative tax code"
                 )
             if self.pay_to_date.is_nan():
-                raise ValueError(
-                    "Pay to date is required for cumulative tax codes"
-                )
+                raise ValueError("Pay to date is required for cumulative tax codes")
             if self.tax_to_date_non_inclusive.is_nan():
-                raise ValueError(
-                    "Tax to date non-inclusive is required for cumulative tax codes"
-                )
+                raise ValueError("Tax to date non-inclusive is required for cumulative tax codes")
 
     @property
     def total_gross(self) -> Decimal:
