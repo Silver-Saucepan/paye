@@ -54,6 +54,24 @@ Use these to create an instance of the Payslip class
 The income tax for this week / month is provided by the income tax property
 of the payslip.
 
+For example:
+
+``` python
+import paye
+from decimal import Decimal
+
+payslip = paye.Payslip(
+  year=2026,
+  basic_pay=Decimal('1000.00'),
+  code=paye.TaxCode('1257L'),
+  period=5,
+  pay_to_date=Decimal('5000.00'),
+  tax_to_date_non_inclusive=Decimal('100.00')
+)
+print(f"Income tax due this period = {payslip.income_tax}")
+
+```
+
 ## Testing
 
 This module is validated against the test cases provided by HMRC
