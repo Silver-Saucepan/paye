@@ -12,7 +12,7 @@ how much income tax to deduct.
 
 This package implements the algorithms for calculating the income tax
 due as defined by HMRC in their "SPECIFICATION FOR PAYE TAX TABLE ROUTINES"
-Version 24, dated January 2026
+from version 18, dated March 2020 onwards.
 
 ## HMRC Constants
 
