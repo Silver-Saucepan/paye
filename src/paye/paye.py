@@ -7,15 +7,14 @@ throughout the tax year under a scheme called 'PAYE' (Pay As You Earn).
 This module provides an implementation of:
 
     'HMRC Specification for PAYE Tax Table Routines'
-    Version 24.0, January 2026
 
 Exported classes:
     TaxCode: Analyses an HMRC tax code
     Payslip: All the data normally shown on a payslip
 
 Exported functions:
-    tax_due: calculate tax due
-
+    str_to_decimal: Convert a string to a Decimal removing unsupported characters
+    uk_tax_period_start_date: Return the start date of the given monthly tax period in the given tax year
 
 """
 
@@ -88,8 +87,7 @@ def additional_rate(code: TaxCode, year: int) -> Decimal:
 
 
 class TaxCode:
-    """
-    Attributes and methods for holding and interrogating HMRC tax codes.
+    """Attributes and methods for holding and interrogating HMRC tax codes.
 
     Attributes:
         nation: 'S', 'C' if Scottish or Welsh, or none if English or NI
@@ -97,6 +95,15 @@ class TaxCode:
         numeric_part: The numbers used to calculate tax-free amount
         suffix: Indicates various conditions like Personal Allowance
         basis: Cumulative or week1/month 1
+
+    Methods:
+        is_br(): returns True for Basic Rate code
+        is_cumulative(): returns True for a cumulative code
+        is_nt(): returns True for No Tax code
+        is_w1m1(): returns True for a Week 1/Month 1 code
+        d_index(): returns the integer index to the additional rate
+        free_pay_w1m1(): returns the free or additional pay on a week 1/month 1 basis
+
     """
 
     def __init__(self, code: str) -> None:
