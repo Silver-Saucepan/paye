@@ -132,7 +132,7 @@ class TaxCode:
             else:
                 raise ValueError(f'Invalid tax code: {self.code}')
 
-    def __str__(self):
+    def __str__(self) -> str:
         return f"""Tax code {self.code}
     Nation: {self.nation}
     Prefix: {self.prefix}
