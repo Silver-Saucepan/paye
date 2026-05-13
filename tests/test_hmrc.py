@@ -4,9 +4,11 @@ from decimal import Decimal
 
 import pandas as pd
 import pytest
+from fiscalyear import FiscalMonth
 
 import paye
 
+FISCAL_YEAR = 2026
 ZIP_PATH = 'tests/data/Tax-test-data-examples-2026-27-v1-1.zip'
 HEADER_ROW = 4
 
@@ -114,6 +116,7 @@ def scotland_test_data(request):
         df = df.dropna()
     return df
 
+
 @pytest.fixture(
     scope='module',
     params=[
@@ -160,41 +163,44 @@ def wales_test_data(request):
         df = df.dropna()
     return df
 
+
 def test_uk(uk_test_data):
     for test_case in uk_test_data.itertuples():
         tax_code = paye.TaxCode(test_case.code)
+        fm = FiscalMonth(FISCAL_YEAR, test_case.period)
         payslip = paye.Payslip(
-            2026,
+            fm.start,
             test_case.gross,
             tax_code,
-            period=test_case.period,
             pay_to_date=test_case.gross_to_date,
-            tax_to_date_non_inclusive=test_case.tax_due_to_date - test_case.tax_due
+            tax_to_date_non_inclusive=test_case.tax_due_to_date - test_case.tax_due,
         )
         assert payslip.income_tax == test_case.tax_due
+
 
 def test_scotland(scotland_test_data):
     for test_case in scotland_test_data.itertuples():
         tax_code = paye.TaxCode(test_case.code)
+        fm = FiscalMonth(FISCAL_YEAR, test_case.period)
         payslip = paye.Payslip(
-            2026,
+            fm.start,
             test_case.gross,
             tax_code,
-            period=test_case.period,
             pay_to_date=test_case.gross_to_date,
-            tax_to_date_non_inclusive=test_case.tax_due_to_date - test_case.tax_due
+            tax_to_date_non_inclusive=test_case.tax_due_to_date - test_case.tax_due,
         )
         assert payslip.income_tax == test_case.tax_due
+
 
 def test_wales(wales_test_data):
     for test_case in wales_test_data.itertuples():
         tax_code = paye.TaxCode(test_case.code)
+        fm = FiscalMonth(FISCAL_YEAR, test_case.period)
         payslip = paye.Payslip(
-            2026,
+            fm.start,
             test_case.gross,
             tax_code,
-            period=test_case.period,
             pay_to_date=test_case.gross_to_date,
-            tax_to_date_non_inclusive=test_case.tax_due_to_date - test_case.tax_due
+            tax_to_date_non_inclusive=test_case.tax_due_to_date - test_case.tax_due,
         )
         assert payslip.income_tax == test_case.tax_due

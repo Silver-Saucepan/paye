@@ -19,7 +19,6 @@ Exported functions:
 
 """
 
-import datetime
 import os
 import re
 import tomllib
@@ -27,6 +26,8 @@ from dataclasses import dataclass, field
 from decimal import ROUND_CEILING, ROUND_FLOOR, Decimal
 from importlib import resources
 from typing import Any
+
+import fiscalyear
 
 TAX_CODE_REGEX = r'^(?P<nation>[SC])?(?P<prefix>BR|NT|0T|D|K)?(?P<numeric>\d*)(?P<suffix>[LMNTPY])?[\s/]*(?P<basis>[\w ]*)$'
 
@@ -49,6 +50,8 @@ TAX_CODE_REGEX = r'^(?P<nation>[SC])?(?P<prefix>BR|NT|0T|D|K)?(?P<numeric>\d*)(?
 # Group 5: The basis (cumulative vs week 1/month 1)
 
 N_PERIODS = 12 if os.environ.get('PAYE_PERIOD', 'monthly').lower() == 'monthly' else 52
+
+fiscalyear.setup_fiscal_calendar('same', 4, 6)
 
 
 def tax_rates(code: TaxCode, year: int) -> list[Decimal]:
@@ -205,23 +208,23 @@ class Payslip:
     """Payslip Model
 
     Attributes used for all tax codes:
-        year (int): The calendar year in which the tax year starts
+        pay_date (fiscalyear.FiscalDate): The pay date
         basic_pay (Decimal): The basic pay
         code (TaxCode): The tax code provided by HMRC
         pay_adjustments (list[Decimal]): Adjustments to basic_pay. Default = £0.00
         pbik (Decimal): payrolled benefits in kind. Default = £0.00
 
     Attributes used for cumulative tax codes only:
-        period (int): The tax period (1 to 12 or 52)
         pay_to_date (Decimal): The pay received this tax year (including this period)
         tax_to_date_non_inclusive (Decimal): Income tax paid this fiscal year, not including this period
 
     Other attributes (Not used in tax calculations)
         other_deductions (Decimal): Other deductions
         payer_name (str): The name of the payer
-        pay_date (datetime.date): The pay date
 
     Properties (all read-only):
+        year (int): The calendar year in which the tax year starts
+        period (int): The tax period (1 to 12 or 52)
         total_gross (Decimal): basic_pay + pay_adjustments
         income_tax (Decimal): The income tax to be deducted this period
         total_deductions (Decimal): income_tax + other_deductions
@@ -229,30 +232,32 @@ class Payslip:
         tax_to_date (Decimal): tax_to_date_non_inclusive + income_tax
     """
 
-    year: int
+    pay_date: fiscalyear.FiscalDateTime
     basic_pay: Decimal
     code: TaxCode
     pay_adjustments: list[Decimal] = field(default_factory=list[Decimal('0.0')])
     pbik: Decimal = Decimal('0.00')
 
-    period: int = 0
     pay_to_date: Decimal = Decimal('NaN')
     tax_to_date_non_inclusive: Decimal = Decimal('NaN')
 
     payer_name: str = ''
-    pay_date: datetime.date = datetime.date(year=1970, month=1, day=1)
     other_deductions: list[Decimal] = field(default_factory=list[Decimal('0.0')])
 
     def __post_init__(self) -> None:
         if self.code.is_cumulative():
-            if not 1 <= self.period <= N_PERIODS:
-                raise ValueError(
-                    f"Period number in range 1..{N_PERIODS} is required for cumulative tax code"
-                )
             if self.pay_to_date.is_nan():
                 raise ValueError("Pay to date is required for cumulative tax codes")
             if self.tax_to_date_non_inclusive.is_nan():
                 raise ValueError("Tax to date non-inclusive is required for cumulative tax codes")
+
+    @property
+    def year(self) -> int:
+        return self.pay_date.fiscal_year
+
+    @property
+    def period(self) -> int:
+        return self.pay_date.fiscal_month
 
     @property
     def total_gross(self) -> Decimal:
@@ -431,26 +436,6 @@ class Payslip:
                 p_n=self.total_gross,
                 pbik=self.pbik,
             )
-
-
-def uk_tax_period_start_date(tax_year: int, tax_period: int) -> datetime.date:
-    """Return the start date of the given monthly tax period in the given tax year
-
-    Args:
-        tax_year: The year in which the tax year starts
-        tax_period: The tax period number in the range 1 to 12
-
-    Returns:
-        The start date of the tax period
-
-    Raises:
-        ValueError if tax_period not in range 1..12
-    """
-    if not 1 <= tax_period <= 12:
-        raise ValueError('tax_period must be in the range 1..12')
-
-    q, r = divmod(tax_period + 2, 12)
-    return datetime.date(year=tax_year + q, month=r + 1, day=6)
 
 
 def str_to_decimal(amount: str) -> Decimal:
