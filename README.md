@@ -26,7 +26,7 @@ which needs to be updated for each new tax year.
 
 1. the TaxCode class
 2. the Payslip class
-3. utility functions str_to_decimal and uk_tax_period_start_date
+3. utility function str_to_decimal
 
 ## Usage
 
@@ -39,15 +39,16 @@ if unset, monthly is assumed
 
 The inputs are:
 
-1. Your basic pay for the week / month
-2. Your tax code for the week / month (as given by HMRC via a letter or your
+1. The pay date
+2. Your basic pay for the week / month
+3. Your tax code for the week / month (as given by HMRC via a letter or your
    Personal Tax Account on gov.uk)
-3. Any pay adjustments for the week / month (e.g. bonus)
-4. Any payrolled benefits in kind
+4. Any pay adjustments for the week / month (e.g. bonus)
+5. Any payrolled benefits in kind
 ... and for cumulative tax codes;
-5. The tax period number
-6. Your total gross pay for the tax year including this week / month
-7. The income tax you've paid so far this tax year, NOT including this week/month
+6. The tax period number
+7. Your total gross pay for the tax year including this week / month
+8. The income tax you've paid so far this tax year, NOT including this week/month
 
 Use these to create an instance of the Payslip class
 
@@ -59,14 +60,14 @@ For example:
 ``` python
 import paye
 from decimal import Decimal
+from fiscalyear import FiscalDateTime
 
 payslip = paye.Payslip(
-  year=2026,
-  basic_pay=Decimal('1000.00'),
+  pay_date = FiscalDateTime(2026, 4, 30),
+  basic_pay=Decimal('1156.25'),
   code=paye.TaxCode('1257L'),
-  period=5,
-  pay_to_date=Decimal('5000.00'),
-  tax_to_date_non_inclusive=Decimal('100.00')
+  pay_to_date=Decimal('1156.25'),
+  tax_to_date_non_inclusive=Decimal('0.00')
 )
 print(f"Income tax due this period = {payslip.income_tax}")
 
