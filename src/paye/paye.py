@@ -26,7 +26,7 @@ from decimal import ROUND_CEILING, ROUND_FLOOR, Decimal
 from importlib import resources
 from typing import Any
 
-import fiscalyear
+from fiscalyear import FiscalDate, setup_fiscal_calendar
 
 TAX_CODE_REGEX = r'^(?P<nation>[SC])?(?P<prefix>BR|NT|0T|D|K)?(?P<numeric>\d*)(?P<suffix>[LMNTPY])?[\s/]*(?P<basis>[\w ]*)$'
 
@@ -50,7 +50,7 @@ TAX_CODE_REGEX = r'^(?P<nation>[SC])?(?P<prefix>BR|NT|0T|D|K)?(?P<numeric>\d*)(?
 
 N_PERIODS = 12 if os.environ.get('PAYE_PERIOD', 'monthly').lower() == 'monthly' else 52
 
-fiscalyear.setup_fiscal_calendar('same', 4, 6)
+setup_fiscal_calendar('same', 4, 6)
 
 
 def tax_rates(code: TaxCode, year: int) -> list[Decimal]:
@@ -239,7 +239,7 @@ class Payslip:
         tax_to_date (Decimal): tax_to_date_non_inclusive + income_tax
     """
 
-    pay_date: fiscalyear.FiscalDateTime
+    pay_date: FiscalDate
     basic_pay: Decimal
     code: TaxCode
     pay_adjustments: list[Decimal] = field(default_factory=list[Decimal('0.0')])
