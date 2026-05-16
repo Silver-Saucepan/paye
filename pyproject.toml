@@ -14,19 +14,18 @@ requires-python = ">=3.14"
 dependencies = ["fiscalyear"]
 license = "MIT"
 license-files = ["LICEN[CS]E*"]
-keywords = []
+keywords = ["uk", "income tax", "pay as you earn", "hmrc"]
 classifiers = [
   "Development Status :: 3 - Alpha",
+  "Framework :: Hatch",
+  "License :: OSI Approved :: MIT License",
+  "Natural Language :: English",
+  "Operating System :: OS Independent",
   "Programming Language :: Python",
   "Programming Language :: Python :: 3.14",
   "Programming Language :: Python :: Implementation :: CPython",
   "Programming Language :: Python :: Implementation :: PyPy",
-  "Operating System :: OS Independent",
-  "Framework :: Hatch",
-  "Intended Audience :: Financial and Insurance Industry",
   "Topic :: Office/Business :: Financial",
-  "License :: OSI Approved :: MIT License",
-  "Natural Language :: English",
 ]
 
 [project.urls]
