@@ -2,7 +2,7 @@
 
 In the UK, employees and pensioners usually pay their income tax in
 monthly or weekly installments deducted automatically from their pay
-throughout the tax year under a scheme called 'PAYE' (Pay As You Earn).
+throughout the tax year under a scheme called 'PAYE' (Pay-As-You-Earn).
 
 This module provides an implementation of:
 
@@ -14,8 +14,6 @@ Exported classes:
 
 Exported functions:
     str_to_decimal: Convert a string to a Decimal removing unsupported characters
-    uk_tax_period_start_date: Return the start date of the given monthly tax period in the given tax year
-
 """
 
 import os
@@ -264,7 +262,19 @@ class Payslip:
 
     @property
     def period(self) -> int:
-        return self.pay_date.fiscal_month
+        paye_period = os.environ.get('PAYE_PERIOD', 'monthly')
+        if paye_period.lower() == 'monthly':
+            return self.pay_date.fiscal_month
+        elif paye_period.lower() == 'weekly':
+            # Fiscal week number 1..53. Week 53 is only one or two days long
+            # From National Insurance Manual on gov.uk:
+            # These [tax weeks] are successive periods of 7 days, including Sundays, beginning with
+            # 6 April each year. As the number of days in a tax year is not exactly divisible by seven,
+            # any remaining odd days at the end of the tax year are treated as a separate week – “week 53”.
+            fw = -(-self.pay_date.fiscal_day // 7)
+            return fw
+        else:
+            raise ValueError(f"Invalid PAYE_PERIOD environment variable: {paye_period}")
 
     @property
     def total_gross(self) -> Decimal:

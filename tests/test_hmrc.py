@@ -4,7 +4,7 @@ from decimal import Decimal
 
 import pandas as pd
 import pytest
-from fiscalyear import FiscalMonth
+from fiscalyear import FiscalMonth, FiscalDate, FiscalDay
 
 import paye
 
@@ -167,9 +167,15 @@ def wales_test_data(request):
 def test_uk(uk_test_data):
     for test_case in uk_test_data.itertuples():
         tax_code = paye.TaxCode(test_case.code)
-        fm = FiscalMonth(FISCAL_YEAR, test_case.period)
+        if os.environ.get('PAYE_PERIOD', 'monthly').lower() == 'monthly':
+            fm = FiscalMonth(FISCAL_YEAR, test_case.period)
+            pay_date = FiscalDate(fm.start.year, fm.start.month, fm.start.day)
+        else:
+            fiscal_day = FiscalDay(FISCAL_YEAR, test_case.period * 7)
+            pay_date = FiscalDate(fiscal_day.start.year, fiscal_day.start.month, fiscal_day.start.day)
+
         payslip = paye.Payslip(
-            fm.start,
+            pay_date,
             test_case.gross,
             tax_code,
             pay_to_date=test_case.gross_to_date,
@@ -181,9 +187,15 @@ def test_uk(uk_test_data):
 def test_scotland(scotland_test_data):
     for test_case in scotland_test_data.itertuples():
         tax_code = paye.TaxCode(test_case.code)
-        fm = FiscalMonth(FISCAL_YEAR, test_case.period)
+        if os.environ.get('PAYE_PERIOD', 'monthly').lower() == 'monthly':
+            fm = FiscalMonth(FISCAL_YEAR, test_case.period)
+            pay_date = FiscalDate(fm.start.year, fm.start.month, fm.start.day)
+        else:
+            fiscal_day = FiscalDay(FISCAL_YEAR, test_case.period * 7)
+            pay_date = FiscalDate(fiscal_day.start.year, fiscal_day.start.month, fiscal_day.start.day)
+
         payslip = paye.Payslip(
-            fm.start,
+            pay_date,
             test_case.gross,
             tax_code,
             pay_to_date=test_case.gross_to_date,
@@ -195,9 +207,14 @@ def test_scotland(scotland_test_data):
 def test_wales(wales_test_data):
     for test_case in wales_test_data.itertuples():
         tax_code = paye.TaxCode(test_case.code)
-        fm = FiscalMonth(FISCAL_YEAR, test_case.period)
+        if os.environ.get('PAYE_PERIOD', 'monthly').lower() == 'monthly':
+            fm = FiscalMonth(FISCAL_YEAR, test_case.period)
+            pay_date = FiscalDate(fm.start.year, fm.start.month, fm.start.day)
+        else:
+            fiscal_day = FiscalDay(FISCAL_YEAR, test_case.period * 7)
+            pay_date = FiscalDate(fiscal_day.start.year, fiscal_day.start.month, fiscal_day.start.day)
         payslip = paye.Payslip(
-            fm.start,
+            pay_date,
             test_case.gross,
             tax_code,
             pay_to_date=test_case.gross_to_date,

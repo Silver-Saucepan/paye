@@ -12,12 +12,13 @@ how much income tax to deduct.
 
 This package implements the algorithms for calculating the income tax
 due as defined by HMRC in their "SPECIFICATION FOR PAYE TAX TABLE ROUTINES"
-from version 18, dated March 2020 onwards.
+from version 18, dated March 2020 onwards.  This is what is meant by "the specification"
+in the rest of this document.
 
 ## HMRC Constants
 
 The algorithms use a set of constants that are dependent on tax year
-and defined in the Specification.
+and are defined in the specification.
 
 This package reads the constants from a TOML file 'hmrc.toml'
 which needs to be updated for each new tax year.
@@ -46,7 +47,6 @@ The inputs are:
 4. Any pay adjustments for the week / month (e.g. bonus)
 5. Any payrolled benefits in kind
 ... and for cumulative tax codes;
-6. The tax period number
 7. Your total gross pay for the tax year including this week / month
 8. The income tax you've paid so far this tax year, NOT including this week/month
 
@@ -60,10 +60,10 @@ For example:
 ``` python
 import paye
 from decimal import Decimal
-from fiscalyear import FiscalDateTime
+from fiscalyear import FiscalDate
 
 payslip = paye.Payslip(
-  pay_date = FiscalDateTime(2026, 4, 30),
+  pay_date = FiscalDate(2026, 4, 30),
   basic_pay=Decimal('1156.25'),
   code=paye.TaxCode('1257L'),
   pay_to_date=Decimal('1156.25'),
@@ -72,6 +72,13 @@ payslip = paye.Payslip(
 print(f"Income tax due this period = {payslip.income_tax}")
 
 ```
+## Note on weekly pay
+
+The algorithms in the specification use 52 periods for weekly pay, but 52 * 7 = 364
+so 5th of April (or 4th and 5th on a leap year) have week number 53.
+The HMRC test cases do not validate the algorithm for week 53 so this
+package may calculate incorrect income tax for weekly paid employees if
+the pay day falls in week 53.
 
 ## Testing
 
