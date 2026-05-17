@@ -22,7 +22,7 @@ import tomllib
 from dataclasses import dataclass, field
 from decimal import ROUND_CEILING, ROUND_FLOOR, Decimal
 from importlib import resources
-from typing import Any
+from typing import Any, NamedTuple
 
 from fiscalyear import FiscalDate, setup_fiscal_calendar
 
@@ -49,6 +49,11 @@ TAX_CODE_REGEX = r'^(?P<nation>[SC])?(?P<prefix>BR|NT|0T|D|K)?(?P<numeric>\d*)(?
 N_PERIODS = 12 if os.environ.get('PAYE_PERIOD', 'monthly').lower() == 'monthly' else 52
 
 setup_fiscal_calendar('same', 4, 6)
+
+class DescribedAmount(NamedTuple):
+    """Attach a description to an amount"""
+    description: str
+    amount: Decimal
 
 
 def tax_rates(code: TaxCode, year: int) -> list[Decimal]:
@@ -212,42 +217,42 @@ class TaxCode:
 class Payslip:
     """Payslip Model
 
-    Attributes used for all tax codes:
+    Attributes required for all tax codes:
         pay_date (fiscalyear.FiscalDate): The pay date
-        basic_pay (Decimal): The basic pay
+        basic_pay (decimal.Decimal): The basic pay
         code (TaxCode): The tax code provided by HMRC
-        pay_adjustments (list[Decimal]): Adjustments to basic_pay. Default = £0.00
-        pbik (Decimal): payrolled benefits in kind. Default = £0.00
+        pay_adjustments (list[decimal.Decimal]): Adjustments to basic_pay (e.g. Bonus, overtime, ...)
+        pbiks (decimal.Decimal): payrolled benefits in kind (e.g. Car, Medical Insurance, ...)
 
-    Attributes used for cumulative tax codes only:
-        pay_to_date (Decimal): The pay received this tax year (including this period)
-        tax_to_date_non_inclusive (Decimal): Income tax paid this fiscal year, not including this period
+    Attributes required for cumulative tax codes only:
+        pay_to_date (decimal.Decimal): The pay received this tax year (including this period)
+        tax_to_date_non_inclusive (decimal.Decimal): Income tax paid this fiscal year, not including this period
 
     Other attributes (Not used in tax calculations)
-        other_deductions (Decimal): Other deductions
+        other_deductions (decimal.Decimal): Other deductions (e.g. Pension, Student Loan Repayment, ...)
         payer_name (str): The name of the payer
 
     Properties (all read-only):
         year (int): The calendar year in which the tax year starts
-        period (int): The tax period (1 to 12 or 52)
-        total_gross (Decimal): basic_pay + pay_adjustments
-        income_tax (Decimal): The income tax to be deducted this period
-        total_deductions (Decimal): income_tax + other_deductions
-        net_pay (Decimal): total_gross - total_deductions
-        tax_to_date (Decimal): tax_to_date_non_inclusive + income_tax
+        period (int): The tax period (1 to 12 or 53)
+        total_gross (decimal.Decimal): basic_pay + pay_adjustments
+        income_tax (decimal.Decimal): The income tax to be deducted this period
+        total_deductions (decimal.Decimal): income_tax + other_deductions
+        net_pay (decimal.Decimal): total_gross - total_deductions
+        tax_to_date (decimal.Decimal): tax_to_date_non_inclusive + income_tax
     """
 
     pay_date: FiscalDate
     basic_pay: Decimal
     code: TaxCode
-    pay_adjustments: list[Decimal] = field(default_factory=list[Decimal('0.0')])
-    pbik: Decimal = Decimal('0.00')
+    pay_adjustments: list[DescribedAmount]= field(default_factory=list)
+    pbiks: list[DescribedAmount] = field(default_factory=list)
 
     pay_to_date: Decimal = Decimal('NaN')
     tax_to_date_non_inclusive: Decimal = Decimal('NaN')
 
     payer_name: str = ''
-    other_deductions: list[Decimal] = field(default_factory=list[Decimal('0.0')])
+    other_deductions: list[DescribedAmount] = field(default_factory=list)
 
     def __post_init__(self) -> None:
         if self.code.is_cumulative():
@@ -271,18 +276,17 @@ class Payslip:
             # These [tax weeks] are successive periods of 7 days, including Sundays, beginning with
             # 6 April each year. As the number of days in a tax year is not exactly divisible by seven,
             # any remaining odd days at the end of the tax year are treated as a separate week – “week 53”.
-            fw = -(-self.pay_date.fiscal_day // 7)
-            return fw
+            return -(-self.pay_date.fiscal_day // 7)
         else:
             raise ValueError(f"Invalid PAYE_PERIOD environment variable: {paye_period}")
 
     @property
     def total_gross(self) -> Decimal:
-        return self.basic_pay + sum(self.pay_adjustments)
+        return self.basic_pay + sum(adj.amount for adj in self.pay_adjustments)
 
     @property
     def total_deductions(self) -> Decimal:
-        return self.income_tax + sum(self.other_deductions)
+        return self.income_tax + sum(ded.amount for ded in self.other_deductions)
 
     @property
     def net_pay(self) -> Decimal:
@@ -371,7 +375,7 @@ class Payslip:
         year: int,
         code: TaxCode,
         p_n: Decimal,
-        pbik: Decimal,
+        pbik: Decimal | int,
     ) -> Decimal:
         """Calculate the tax due on a 'Week 1/Month 1' basis.
 
@@ -400,7 +404,7 @@ class Payslip:
         p_n: Decimal,
         P_n: Decimal,
         L_n_1: Decimal,
-        pbik: Decimal,
+        pbik: Decimal | int,
     ) -> Decimal:
         """Calculate the income tax due for cumulative suffix codes and cumulative prefix k."""
         # 4.2 Stage 1 Calculation of Cumulative Pay to date is delegated
@@ -437,6 +441,11 @@ class Payslip:
         if self.year not in CONSTANTS:
             raise ValueError(f"HMRC constants for year {self.year} are missing")
         if self.code.is_cumulative():
+            if self.pay_to_date.is_nan():
+                raise ValueError(f"pay_to_date is required for cumulative tax codes")
+            if self.tax_to_date_non_inclusive.is_nan():
+                raise ValueError(f"tax_to_date_non_inclusive is required for cumulative tax codes")
+
             return self._tax_due_cumulative(
                 year=self.year,
                 period=self.period,
@@ -444,14 +453,14 @@ class Payslip:
                 p_n=self.total_gross,
                 P_n=self.pay_to_date,  # type: ignore
                 L_n_1=self.tax_to_date_non_inclusive,  # type: ignore
-                pbik=self.pbik,
+                pbik=sum(bik.amount for bik in self.pbiks),
             )
         else:
             return self._tax_due_w1m1(
                 year=self.year,
                 code=self.code,
                 p_n=self.total_gross,
-                pbik=self.pbik,
+                pbik=sum(bik.amount for bik in self.pbiks),
             )
 
 
