@@ -166,6 +166,7 @@ class TaxCode:
         """
         if self.prefix == 'D' and self.numeric_part:
             return int(self.numeric_part)
+        return None
 
     def is_w1m1(self) -> bool:
         """Return True if the code indicates a 'Week 1/Month 1' code."""
@@ -274,7 +275,7 @@ class Payslip:
             # From National Insurance Manual on gov.uk:
             # These [tax weeks] are successive periods of 7 days, including Sundays, beginning with
             # 6 April each year. As the number of days in a tax year is not exactly divisible by seven,
-            # any remaining odd days at the end of the tax year are treated as a separate week – “week 53”.
+            # any remaining odd days at the end of the tax year are treated as a separate week - “week 53”.
             return -(-self.pay_date.fiscal_day // 7)
         msg = f"Invalid PAYE_PERIOD environment variable: {paye_period}"
         raise ValueError(msg)
