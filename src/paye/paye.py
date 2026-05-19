@@ -124,7 +124,8 @@ class TaxCode:
             r = p.match(self.code)
             if r:
                 if r.group('basis') == self.code:
-                    raise ValueError(f'Invalid tax code: {self.code}')
+                    msg = f'Invalid tax code {self.code}'
+                    raise ValueError(msg)
                 (
                     self.nation,
                     self.prefix,
@@ -133,7 +134,8 @@ class TaxCode:
                     self.basis,
                 ) = r.groups()
             else:
-                raise ValueError(f'Invalid tax code: {self.code}')
+                msg = f'Invalid tax code: {self.code}'
+                raise ValueError(msg)
 
     def __str__(self) -> str:
         return f"""Tax code {self.code}
@@ -274,7 +276,8 @@ class Payslip:
             # 6 April each year. As the number of days in a tax year is not exactly divisible by seven,
             # any remaining odd days at the end of the tax year are treated as a separate week – “week 53”.
             return -(-self.pay_date.fiscal_day // 7)
-        raise ValueError(f"Invalid PAYE_PERIOD environment variable: {paye_period}")
+        msg = f"Invalid PAYE_PERIOD environment variable: {paye_period}"
+        raise ValueError(msg)
 
     @property
     def total_gross(self) -> Decimal:
@@ -432,7 +435,8 @@ class Payslip:
         if self.total_gross.is_nan():
             return Decimal('NaN')
         if self.year not in CONSTANTS:
-            raise ValueError(f"HMRC constants for year {self.year} are missing")
+            msg = f"HMRC constants for year {self.year} are missing"
+            raise ValueError(msg)
         if self.code.is_cumulative():
             if self.pay_to_date.is_nan():
                 raise ValueError("pay_to_date is required for cumulative tax codes")
