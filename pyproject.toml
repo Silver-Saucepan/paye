@@ -51,3 +51,7 @@ line-length = 100
 
 [tool.ruff.format]
 quote-style = "preserve"
+
+[tool.ruff.lint]
+# Ignore non-lowercase variable names in functions
+ignore = ["N803", "N806"]
