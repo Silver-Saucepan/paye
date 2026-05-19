@@ -29,5 +29,5 @@ def test_no_tax_to_date_raises():
             FiscalDateTime(2026, 6, 1),
             Decimal('100.00'),
             TaxCode('1257L'),
-            pay_to_date=Decimal('10'),
+            pay_to_date=Decimal(10),
         )

@@ -4,7 +4,7 @@ from decimal import Decimal
 
 import pandas as pd
 import pytest
-from fiscalyear import FiscalMonth, FiscalDate, FiscalDay
+from fiscalyear import FiscalDate, FiscalDay, FiscalMonth
 
 import paye
 

@@ -60,10 +60,9 @@ def tax_rates(code: TaxCode, year: int) -> list[Decimal]:
     """Return a list of tax rates for the year/nation"""
     if code.nation == 'S':
         return CONSTANTS[year]['SR']
-    elif code.nation == 'C':
+    if code.nation == 'C':
         return CONSTANTS[year]['WR']
-    else:
-        return CONSTANTS[year]['R']
+    return CONSTANTS[year]['R']
 
 
 def basic_rate(code: TaxCode, year: int) -> Decimal:
@@ -71,12 +70,11 @@ def basic_rate(code: TaxCode, year: int) -> Decimal:
     if code.nation == 'S':
         rate_pointer = CONSTANTS[year]['G1']
         return CONSTANTS[year]['SR'][rate_pointer]
-    elif code.nation == 'C':
+    if code.nation == 'C':
         rate_pointer = CONSTANTS[year]['G2']
         return CONSTANTS[year]['WR'][rate_pointer]
-    else:
-        rate_pointer = CONSTANTS[year]['G']
-        return CONSTANTS[year]['R'][rate_pointer]
+    rate_pointer = CONSTANTS[year]['G']
+    return CONSTANTS[year]['R'][rate_pointer]
 
 
 def additional_rate(code: TaxCode, year: int) -> Decimal:
@@ -84,12 +82,11 @@ def additional_rate(code: TaxCode, year: int) -> Decimal:
     if code.nation == 'S':
         rate_pointer = CONSTANTS[year]['G1'] + 1 + code.d_index()
         return CONSTANTS[year]['SR'][rate_pointer]
-    elif code.nation == 'C':
+    if code.nation == 'C':
         rate_pointer = CONSTANTS[year]['G2'] + 1 + code.d_index()
         return CONSTANTS[year]['WR'][rate_pointer]
-    else:
-        rate_pointer = CONSTANTS[year]['G'] + 1 + code.d_index()
-        return CONSTANTS[year]['R'][rate_pointer]
+    rate_pointer = CONSTANTS[year]['G'] + 1 + code.d_index()
+    return CONSTANTS[year]['R'][rate_pointer]
 
 
 class TaxCode:
@@ -196,7 +193,7 @@ class TaxCode:
         else:
             # Using the "Note for programmers" method
             # at the end of 4.3.1
-            q, r = divmod(numeric - 1, Decimal('500'))
+            q, r = divmod(numeric - 1, Decimal(500))
             r += 1
             free_pay_r = ((r * 10 + 9) / N_PERIODS).quantize(
                 Decimal('0.01'), rounding=ROUND_CEILING
@@ -270,15 +267,14 @@ class Payslip:
         paye_period = os.environ.get('PAYE_PERIOD', 'monthly')
         if paye_period.lower() == 'monthly':
             return self.pay_date.fiscal_month
-        elif paye_period.lower() == 'weekly':
+        if paye_period.lower() == 'weekly':
             # Fiscal week number 1..53. Week 53 is only one or two days long
             # From National Insurance Manual on gov.uk:
             # These [tax weeks] are successive periods of 7 days, including Sundays, beginning with
             # 6 April each year. As the number of days in a tax year is not exactly divisible by seven,
             # any remaining odd days at the end of the tax year are treated as a separate week – “week 53”.
             return -(-self.pay_date.fiscal_day // 7)
-        else:
-            raise ValueError(f"Invalid PAYE_PERIOD environment variable: {paye_period}")
+        raise ValueError(f"Invalid PAYE_PERIOD environment variable: {paye_period}")
 
     @property
     def total_gross(self) -> Decimal:
@@ -296,8 +292,7 @@ class Payslip:
     def tax_to_date(self) -> Decimal:
         if self.code.is_cumulative():
             return self.tax_to_date_non_inclusive + self.income_tax  # type: ignore
-        else:
-            return self.income_tax
+        return self.income_tax
 
     @staticmethod
     def _taxable_pay_to_date(
@@ -306,9 +301,7 @@ class Payslip:
         cumulative_pay_to_date: Decimal,
     ) -> Decimal:
         """Stage 2: Calculation of Taxable Pay to date (section 4.3)."""
-        if code.is_nt():
-            U_n = cumulative_pay_to_date
-        elif code.d_index() is not None:
+        if code.is_nt() or code.d_index() is not None:
             U_n = cumulative_pay_to_date
         else:
             # Free pay or Additional pay for Month n
@@ -329,7 +322,7 @@ class Payslip:
         """Stage 3: Calculation of tax due to date (section 4.4)."""
         # 4.4.4 round down to nearest pound
         # Added Decimal('0.00') to restore two decimal points
-        T_n = taxable_pay_to_date.quantize(Decimal('0'), rounding=ROUND_FLOOR) + Decimal('0.00')
+        T_n = taxable_pay_to_date.quantize(Decimal(0), rounding=ROUND_FLOOR) + Decimal('0.00')
 
         if code.is_nt():
             L_n = Decimal('0.00')
@@ -350,7 +343,7 @@ class Payslip:
             ]
 
             # Rounded threshold taxes, Definition 10
-            vs = [c.quantize(Decimal('0'), rounding=ROUND_CEILING) for c in cs]
+            vs = [c.quantize(Decimal(0), rounding=ROUND_CEILING) for c in cs]
 
             # Threshold taxes, Definition 11
             ks = [
@@ -361,7 +354,7 @@ class Payslip:
             rates = tax_rates(code, year)
 
             L_n = ks[-1] + (T_n - cs[-1]) * rates[-1]
-            for v, k, c, r in zip(vs[1:], ks[0:], cs[0:], rates[1:]):
+            for v, k, c, r in zip(vs[1:], ks[0:], cs[0:], rates[1:], strict=True):
                 if taxable_pay_to_date <= v:
                     L_n = k + (T_n - c) * r
                     break
@@ -455,13 +448,12 @@ class Payslip:
                 L_n_1=self.tax_to_date_non_inclusive,  # type: ignore
                 pbik=sum(bik.amount for bik in self.pbiks),
             )
-        else:
-            return self._tax_due_w1m1(
-                year=self.year,
-                code=self.code,
-                p_n=self.total_gross,
-                pbik=sum(bik.amount for bik in self.pbiks),
-            )
+        return self._tax_due_w1m1(
+            year=self.year,
+            code=self.code,
+            p_n=self.total_gross,
+            pbik=sum(bik.amount for bik in self.pbiks),
+        )
 
 
 def str_to_decimal(amount: str) -> Decimal:
@@ -507,9 +499,9 @@ def _constants_from_toml(
         constants[year]['K'] = (
             # See notes in section 4.4.4 re additional parameter k0
             Decimal('0.00'),
-            Decimal(sum([a * b for a, b in zip(cnsts[0:1], cnsts[3:4])])),
-            Decimal(sum([a * b for a, b in zip(cnsts[0:2], cnsts[3:5])])),
-            Decimal(sum([a * b for a, b in zip(cnsts[0:3], cnsts[3:6])])),
+            Decimal(sum([a * b for a, b in zip(cnsts[0:1], cnsts[3:4], strict=True)])),
+            Decimal(sum([a * b for a, b in zip(cnsts[0:2], cnsts[3:5], strict=True)])),
+            Decimal(sum([a * b for a, b in zip(cnsts[0:3], cnsts[3:6], strict=True)])),
         )
         constants[year]['R'] = (
             Decimal('NaN'),
@@ -543,11 +535,11 @@ def _constants_from_toml(
         constants[year]['SK'] = (
             # See notes in section 4.4.4 re additional parameter Sk0
             Decimal('0.00'),
-            Decimal(sum([a * b for a, b in zip(cnsts[0:1], cnsts[5:6])])),
-            Decimal(sum([a * b for a, b in zip(cnsts[0:2], cnsts[5:7])])),
-            Decimal(sum([a * b for a, b in zip(cnsts[0:3], cnsts[5:8])])),
-            Decimal(sum([a * b for a, b in zip(cnsts[0:4], cnsts[5:9])])),
-            Decimal(sum([a * b for a, b in zip(cnsts[0:5], cnsts[5:10])])),
+            Decimal(sum([a * b for a, b in zip(cnsts[0:1], cnsts[5:6], strict=True)])),
+            Decimal(sum([a * b for a, b in zip(cnsts[0:2], cnsts[5:7], strict=True)])),
+            Decimal(sum([a * b for a, b in zip(cnsts[0:3], cnsts[5:8], strict=True)])),
+            Decimal(sum([a * b for a, b in zip(cnsts[0:4], cnsts[5:9], strict=True)])),
+            Decimal(sum([a * b for a, b in zip(cnsts[0:5], cnsts[5:10], strict=True)])),
         )
         constants[year]['SR'] = (
             Decimal('NaN'),
@@ -566,9 +558,9 @@ def _constants_from_toml(
         constants[year]['WK'] = (
             # See notes in section 4.4.4 re additional parameter Wk0
             Decimal('0.00'),
-            Decimal(sum([a * b for a, b in zip(constants[year]['B'][1:2], cnsts[0:1])])),
-            Decimal(sum([a * b for a, b in zip(constants[year]['B'][1:3], cnsts[0:2])])),
-            Decimal(sum([a * b for a, b in zip(constants[year]['B'][1:4], cnsts[0:3])])),
+            Decimal(sum([a * b for a, b in zip(constants[year]['B'][1:2], cnsts[0:1], strict=True)])),
+            Decimal(sum([a * b for a, b in zip(constants[year]['B'][1:3], cnsts[0:2], strict=True)])),
+            Decimal(sum([a * b for a, b in zip(constants[year]['B'][1:4], cnsts[0:3], strict=True)])),
         )
         constants[year]['WR'] = (
             Decimal('NaN'),

@@ -1,9 +1,12 @@
 # NOTE: These tests run only for PAYE_PERIOD == 'monthly'
 # (see conftest.py)
 
-from paye import Payslip, TaxCode, DescribedAmount
 from decimal import Decimal
+
 from fiscalyear import FiscalDate
+
+from paye import DescribedAmount, Payslip, TaxCode
+
 
 def test_total_gross():
     ps = Payslip(
