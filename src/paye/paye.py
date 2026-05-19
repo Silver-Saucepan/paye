@@ -50,8 +50,10 @@ N_PERIODS = 12 if os.environ.get('PAYE_PERIOD', 'monthly').lower() == 'monthly' 
 
 setup_fiscal_calendar('same', 4, 6)
 
+
 class DescribedAmount(NamedTuple):
     """Attach a description to an amount"""
+
     description: str
     amount: Decimal
 
@@ -245,7 +247,7 @@ class Payslip:
     pay_date: FiscalDate
     basic_pay: Decimal
     code: TaxCode
-    pay_adjustments: list[DescribedAmount]= field(default_factory=list)
+    pay_adjustments: list[DescribedAmount] = field(default_factory=list)
     pbiks: list[DescribedAmount] = field(default_factory=list)
 
     pay_to_date: Decimal = Decimal('NaN')
@@ -383,7 +385,7 @@ class Payslip:
         Each payment is treated IN ISOLATION, as if it were the first
         payment of the Income Tax year to be taxed on a normal suffix or
         prefix K code.
-        
+
         Note: non-lowercase variable name to follow specification
         """
         # Stage 1: Taxable pay for the weeek/month, section 8.2
@@ -393,11 +395,10 @@ class Payslip:
         L_n = self._tax_due_to_date(year=year, period=1, code=code, taxable_pay_to_date=U_n)
         l_n = L_n - 0
         maxrate = CONSTANTS[year]['M'] * (p_n - pbik)
-        l_n = min(
+        return min(
             l_n,
             maxrate,
         ).quantize(Decimal('0.00'), rounding=ROUND_FLOOR)
-        return l_n
 
     def _tax_due_cumulative(
         self,
@@ -423,12 +424,10 @@ class Payslip:
 
         # 4.5 Stage 4 Calculation of Tax Deduction or Refund
         maxrate = CONSTANTS[year]['M'] * (p_n - pbik)
-        l_n = min(
+        return min(
             L_n - L_n_1,
             maxrate,
         ).quantize(Decimal('0.00'), rounding=ROUND_FLOOR)
-
-        return l_n
 
     @property
     def income_tax(self) -> Decimal:
@@ -571,9 +570,15 @@ def _constants_from_toml(
         constants[year]['WK'] = (
             # See notes in section 4.4.4 re additional parameter Wk0
             Decimal('0.00'),
-            Decimal(sum([a * b for a, b in zip(constants[year]['B'][1:2], cnsts[0:1], strict=True)])),
-            Decimal(sum([a * b for a, b in zip(constants[year]['B'][1:3], cnsts[0:2], strict=True)])),
-            Decimal(sum([a * b for a, b in zip(constants[year]['B'][1:4], cnsts[0:3], strict=True)])),
+            Decimal(
+                sum([a * b for a, b in zip(constants[year]['B'][1:2], cnsts[0:1], strict=True)])
+            ),
+            Decimal(
+                sum([a * b for a, b in zip(constants[year]['B'][1:3], cnsts[0:2], strict=True)])
+            ),
+            Decimal(
+                sum([a * b for a, b in zip(constants[year]['B'][1:4], cnsts[0:3], strict=True)])
+            ),
         )
         constants[year]['WR'] = (
             Decimal('NaN'),
