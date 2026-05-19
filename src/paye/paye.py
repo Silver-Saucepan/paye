@@ -493,41 +493,41 @@ def _constants_from_toml(
 
     constants: dict[int, dict] = {}
     for year, cnsts in data['Common'].items():
-        year = int(year)
-        constants[year] = {}
-        constants[year]['B'] = (
+        y = int(year)
+        constants[y] = {}
+        constants[y]['B'] = (
             Decimal('NaN'),
             Decimal(cnsts[0]),
             Decimal(cnsts[1]),
             Decimal(cnsts[2]),
         )
-        constants[year]['C'] = (
+        constants[y]['C'] = (
             # See notes in section 4.4.4 re additional parameter c0
             Decimal('0.00'),
             Decimal(sum(cnsts[0:1])),
             Decimal(sum(cnsts[0:2])),
             Decimal(sum(cnsts[0:3])),
         )
-        constants[year]['K'] = (
+        constants[y]['K'] = (
             # See notes in section 4.4.4 re additional parameter k0
             Decimal('0.00'),
             Decimal(sum([a * b for a, b in zip(cnsts[0:1], cnsts[3:4], strict=True)])),
             Decimal(sum([a * b for a, b in zip(cnsts[0:2], cnsts[3:5], strict=True)])),
             Decimal(sum([a * b for a, b in zip(cnsts[0:3], cnsts[3:6], strict=True)])),
         )
-        constants[year]['R'] = (
+        constants[y]['R'] = (
             Decimal('NaN'),
             Decimal(cnsts[3]),
             Decimal(cnsts[4]),
             Decimal(cnsts[5]),
             Decimal(cnsts[6]),
         )
-        constants[year]['G'] = cnsts[7]
-        constants[year]['M'] = Decimal(cnsts[8])
+        constants[y]['G'] = cnsts[7]
+        constants[y]['M'] = Decimal(cnsts[8])
 
     for year, cnsts in data['Scotland'].items():
-        year = int(year)
-        constants[year]['SB'] = (
+        y= int(year)
+        constants[y]['SB'] = (
             Decimal('NaN'),
             Decimal(cnsts[0]),
             Decimal(cnsts[1]),
@@ -535,7 +535,7 @@ def _constants_from_toml(
             Decimal(cnsts[3]),
             Decimal(cnsts[4]),
         )
-        constants[year]['SC'] = (
+        constants[y]['SC'] = (
             # See notes in section 4.4.4 re additional parameter Sc0
             Decimal('0.00'),
             Decimal(sum(cnsts[0:1])),
@@ -544,7 +544,7 @@ def _constants_from_toml(
             Decimal(sum(cnsts[0:4])),
             Decimal(sum(cnsts[0:5])),
         )
-        constants[year]['SK'] = (
+        constants[y]['SK'] = (
             # See notes in section 4.4.4 re additional parameter Sk0
             Decimal('0.00'),
             Decimal(sum([a * b for a, b in zip(cnsts[0:1], cnsts[5:6], strict=True)])),
@@ -553,7 +553,7 @@ def _constants_from_toml(
             Decimal(sum([a * b for a, b in zip(cnsts[0:4], cnsts[5:9], strict=True)])),
             Decimal(sum([a * b for a, b in zip(cnsts[0:5], cnsts[5:10], strict=True)])),
         )
-        constants[year]['SR'] = (
+        constants[y]['SR'] = (
             Decimal('NaN'),
             Decimal(cnsts[5]),
             Decimal(cnsts[6]),
@@ -562,33 +562,33 @@ def _constants_from_toml(
             Decimal(cnsts[9]),
             Decimal(cnsts[10]),
         )
-        constants[year]['G1'] = cnsts[11]
-        constants[year]['M1'] = Decimal(cnsts[12])
+        constants[y]['G1'] = cnsts[11]
+        constants[y]['M1'] = Decimal(cnsts[12])
 
     for year, cnsts in data['Wales'].items():
-        year = int(year)
-        constants[year]['WK'] = (
+        y= int(year)
+        constants[y]['WK'] = (
             # See notes in section 4.4.4 re additional parameter Wk0
             Decimal('0.00'),
             Decimal(
-                sum([a * b for a, b in zip(constants[year]['B'][1:2], cnsts[0:1], strict=True)])
+                sum([a * b for a, b in zip(constants[y]['B'][1:2], cnsts[0:1], strict=True)])
             ),
             Decimal(
-                sum([a * b for a, b in zip(constants[year]['B'][1:3], cnsts[0:2], strict=True)])
+                sum([a * b for a, b in zip(constants[y]['B'][1:3], cnsts[0:2], strict=True)])
             ),
             Decimal(
-                sum([a * b for a, b in zip(constants[year]['B'][1:4], cnsts[0:3], strict=True)])
+                sum([a * b for a, b in zip(constants[y]['B'][1:4], cnsts[0:3], strict=True)])
             ),
         )
-        constants[year]['WR'] = (
+        constants[y]['WR'] = (
             Decimal('NaN'),
             Decimal(cnsts[0]),
             Decimal(cnsts[1]),
             Decimal(cnsts[2]),
             Decimal(cnsts[3]),
         )
-        constants[year]['G2'] = cnsts[4]
-        constants[year]['M2'] = Decimal(cnsts[5])
+        constants[y]['G2'] = cnsts[4]
+        constants[y]['M2'] = Decimal(cnsts[5])
 
     return constants
 
