@@ -442,9 +442,9 @@ class Payslip:
             raise ValueError(f"HMRC constants for year {self.year} are missing")
         if self.code.is_cumulative():
             if self.pay_to_date.is_nan():
-                raise ValueError(f"pay_to_date is required for cumulative tax codes")
+                raise ValueError("pay_to_date is required for cumulative tax codes")
             if self.tax_to_date_non_inclusive.is_nan():
-                raise ValueError(f"tax_to_date_non_inclusive is required for cumulative tax codes")
+                raise ValueError("tax_to_date_non_inclusive is required for cumulative tax codes")
 
             return self._tax_due_cumulative(
                 year=self.year,
