@@ -1,4 +1,4 @@
-from .paye import (
+from paye.paye import (
     DescribedAmount,
     Payslip,
     TaxCode,
