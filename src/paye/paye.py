@@ -303,7 +303,9 @@ class Payslip:
         code: TaxCode,
         cumulative_pay_to_date: Decimal,
     ) -> Decimal:
-        """Stage 2: Calculation of Taxable Pay to date (section 4.3)."""
+        """Stage 2: Calculation of Taxable Pay to date (section 4.3).
+        Note: non-lowercase variable name to follow specification
+        """
         if code.is_nt() or code.d_index() is not None:
             U_n = cumulative_pay_to_date
         else:
@@ -322,7 +324,9 @@ class Payslip:
         code: TaxCode,
         taxable_pay_to_date: Decimal,
     ) -> Decimal:
-        """Stage 3: Calculation of tax due to date (section 4.4)."""
+        """Stage 3: Calculation of tax due to date (section 4.4)
+        Note: non-lowercase variable name to follow specification.
+        """
         # 4.4.4 round down to nearest pound
         # Added Decimal('0.00') to restore two decimal points
         T_n = taxable_pay_to_date.quantize(Decimal(0), rounding=ROUND_FLOOR) + Decimal('0.00')
@@ -378,6 +382,8 @@ class Payslip:
         Each payment is treated IN ISOLATION, as if it were the first
         payment of the Income Tax year to be taxed on a normal suffix or
         prefix K code.
+        
+        Note: non-lowercase variable name to follow specification
         """
         # Stage 1: Taxable pay for the weeek/month, section 8.2
         U_n = p_n - code.free_pay_w1m1()
@@ -402,7 +408,9 @@ class Payslip:
         L_n_1: Decimal,
         pbik: Decimal | int,
     ) -> Decimal:
-        """Calculate the income tax due for cumulative suffix codes and cumulative prefix k."""
+        """Calculate the income tax due for cumulative suffix codes and cumulative prefix k.
+        Note: non-lowercase variable name to follow specification
+        """
         # 4.2 Stage 1 Calculation of Cumulative Pay to date is delegated
         # to the calling function which provides P_n
 
