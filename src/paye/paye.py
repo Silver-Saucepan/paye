@@ -26,7 +26,6 @@ from typing import Any, NamedTuple
 
 from fiscalyear import FiscalDate, setup_fiscal_calendar
 
-
 N_PERIODS = 12 if os.environ.get('PAYE_PERIOD', 'monthly').lower() == 'monthly' else 52
 
 setup_fiscal_calendar('same', 4, 6)
@@ -260,9 +259,11 @@ class Payslip:
     def __post_init__(self) -> None:
         if self.code.is_cumulative():
             if self.pay_to_date.is_nan():
-                raise ValueError("Pay to date is required for cumulative tax codes")
+                msg = "Pay to date is required for cumulative tax codes"
+                raise ValueError(msg)
             if self.tax_to_date_non_inclusive.is_nan():
-                raise ValueError("Tax to date non-inclusive is required for cumulative tax codes")
+                msg = "Tax to date non-inclusive is required for cumulative tax codes"
+                raise ValueError(msg)
 
     @property
     def year(self) -> int:
@@ -448,9 +449,11 @@ class Payslip:
             raise ValueError(msg)
         if self.code.is_cumulative():
             if self.pay_to_date.is_nan():
-                raise ValueError("pay_to_date is required for cumulative tax codes")
+                msg = "pay_to_date is required for cumulative tax codes"
+                raise ValueError(msg)
             if self.tax_to_date_non_inclusive.is_nan():
-                raise ValueError("tax_to_date_non_inclusive is required for cumulative tax codes")
+                msg = "tax_to_date_non_inclusive is required for cumulative tax codes"
+                raise ValueError(msg)
 
             return self._tax_due_cumulative(
                 year=self.year,
