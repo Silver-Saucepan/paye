@@ -26,25 +26,6 @@ from typing import Any, NamedTuple
 
 from fiscalyear import FiscalDate, setup_fiscal_calendar
 
-TAX_CODE_REGEX = r'^(?P<nation>[SC])?(?P<prefix>BR|NT|0T|D|K)?(?P<numeric>\d*)(?P<suffix>[LMNTPY])?[\s/]*(?P<basis>[\w ]*)$'
-
-# Meaning of the groups:
-# Group 1: Indicates if Scottish (S) or Welsh (C for Cymru) rules apply
-# Group 2: The Prefix
-#   BR = Basic Rate on whole amount
-#   NT = No Tax
-#   0T = Personal allowance has been used up or employer doesn't have all the details
-#   D = All income taxed at higher or additional rate (which is determined by group 3)
-#   K = Negative numeric part
-# Group 3: The Numeric Part
-# Group 4: The Suffix
-#   L = Standard tax free personal allowance applies
-#   M = 10% of partner's personal allowance (marriage allowance tax break)
-#   N = Some personal allowance passed to partner (marriage allowance tax break)
-#   T = "Other calculations" included
-#   P = Disused?
-#   Y = Disused?
-# Group 5: The basis (cumulative vs week 1/month 1)
 
 N_PERIODS = 12 if os.environ.get('PAYE_PERIOD', 'monthly').lower() == 'monthly' else 52
 
@@ -111,6 +92,26 @@ class TaxCode:
 
     """
 
+    TAX_CODE_REGEX = r'^(?P<nation>[SC])?(?P<prefix>BR|NT|0T|D|K)?(?P<numeric>\d*)(?P<suffix>[LMNTPY])?[\s/]*(?P<basis>[\w ]*)$'
+
+    # Meaning of the groups:
+    # Group 1: Indicates if Scottish (S) or Welsh (C for Cymru) rules apply
+    # Group 2: The Prefix
+    #   BR = Basic Rate on whole amount
+    #   NT = No Tax
+    #   0T = Personal allowance has been used up or employer doesn't have all the details
+    #   D = All income taxed at higher or additional rate (which is determined by group 3)
+    #   K = Negative numeric part
+    # Group 3: The Numeric Part
+    # Group 4: The Suffix
+    #   L = Standard tax free personal allowance applies
+    #   M = 10% of partner's personal allowance (marriage allowance tax break)
+    #   N = Some personal allowance passed to partner (marriage allowance tax break)
+    #   T = "Other calculations" included
+    #   P = Disused?
+    #   Y = Disused?
+    # Group 5: The basis (cumulative vs week 1/month 1)
+
     def __init__(self, code: str) -> None:
         """Parse a tax code into its component parts and check for unsupported features
 
@@ -122,7 +123,7 @@ class TaxCode:
         """
         self.code = code.strip()
         if self.code:
-            p = re.compile(TAX_CODE_REGEX)
+            p = re.compile(self.TAX_CODE_REGEX)
             r = p.match(self.code)
             if r:
                 if r.group('basis') == self.code:
@@ -526,7 +527,7 @@ def _constants_from_toml(
         constants[y]['M'] = Decimal(cnsts[8])
 
     for year, cnsts in data['Scotland'].items():
-        y= int(year)
+        y = int(year)
         constants[y]['SB'] = (
             Decimal('NaN'),
             Decimal(cnsts[0]),
@@ -566,19 +567,13 @@ def _constants_from_toml(
         constants[y]['M1'] = Decimal(cnsts[12])
 
     for year, cnsts in data['Wales'].items():
-        y= int(year)
+        y = int(year)
         constants[y]['WK'] = (
             # See notes in section 4.4.4 re additional parameter Wk0
             Decimal('0.00'),
-            Decimal(
-                sum([a * b for a, b in zip(constants[y]['B'][1:2], cnsts[0:1], strict=True)])
-            ),
-            Decimal(
-                sum([a * b for a, b in zip(constants[y]['B'][1:3], cnsts[0:2], strict=True)])
-            ),
-            Decimal(
-                sum([a * b for a, b in zip(constants[y]['B'][1:4], cnsts[0:3], strict=True)])
-            ),
+            Decimal(sum([a * b for a, b in zip(constants[y]['B'][1:2], cnsts[0:1], strict=True)])),
+            Decimal(sum([a * b for a, b in zip(constants[y]['B'][1:3], cnsts[0:2], strict=True)])),
+            Decimal(sum([a * b for a, b in zip(constants[y]['B'][1:4], cnsts[0:3], strict=True)])),
         )
         constants[y]['WR'] = (
             Decimal('NaN'),
