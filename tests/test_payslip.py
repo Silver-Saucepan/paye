@@ -60,3 +60,15 @@ def test_net_pay():
     )
 
     assert ps.net_pay == Decimal('1134.85')
+
+def test_pbiks():
+    payslip = Payslip(
+        pay_date=FiscalDate(2026, 4, 30),
+        code=TaxCode('1257L'),
+        basic_pay=Decimal('1056.25'),
+        pbiks=[DescribedAmount('', Decimal('100.00'))],
+        pay_to_date=Decimal('1156.25'),
+        tax_to_date_non_inclusive=Decimal(0)
+    )
+    assert payslip.income_tax == Decimal('21.40')
+
