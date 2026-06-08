@@ -37,6 +37,10 @@ class DescribedAmount(NamedTuple):
     description: str
     amount: Decimal
 
+    # TODO: Possible approach to printing a Payslip on the console:
+    # def __str__(self):
+    #     return f"{self.description}{self.amount:>{40 - len(self.description)}}"
+
 
 def tax_rates(code: TaxCode, year: int) -> list[Decimal]:
     """Return a list of tax rates for the year/nation"""
