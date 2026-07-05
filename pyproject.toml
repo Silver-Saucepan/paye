@@ -16,7 +16,7 @@ license = "MIT"
 license-files = ["LICEN[CS]E*"]
 keywords = ["uk", "income tax", "pay as you earn", "hmrc"]
 classifiers = [
-  "Development Status :: 3 - Alpha",
+  "Development Status :: 4 - Beta",
   "Framework :: Hatch",
   "License :: OSI Approved :: MIT License",
   "Natural Language :: English",
