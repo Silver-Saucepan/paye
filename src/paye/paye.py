@@ -11,9 +11,6 @@ This module provides an implementation of:
 Exported classes:
     TaxCode: Analyses an HMRC tax code
     Payslip: All the data normally shown on a payslip
-
-Exported functions:
-    str_to_decimal: Convert a string to a Decimal removing unsupported characters
 """
 
 import os
@@ -474,22 +471,6 @@ class Payslip:
             p_n=self.total_gross,
             pbik=sum(bik.amount for bik in self.pbiks),
         )
-
-
-def str_to_decimal(amount: str) -> Decimal:
-    """Convert a string to a Decimal by removing unsupported characters
-
-    Note: only partial implements the spec at https://docs.python.org/3/library/decimal.html#decimal.Decimal
-
-    Args:
-        amount: The amount represented as a string
-
-    Returns:
-        The amount as a Decimal
-    """
-    if amount == '#N/A':
-        return Decimal('NaN')
-    return Decimal(re.sub(r'[^+\-.0-9]', '', amount))
 
 
 def _constants_from_toml(
