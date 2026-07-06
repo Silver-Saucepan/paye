@@ -1,4 +1,4 @@
-"""An implementation of PAYE income tax rules for England.
+"""An implementation of PAYE income tax rules for England, Scotland and Wales.
 
 In the UK, employees and pensioners usually pay their income tax in
 monthly or weekly installments deducted automatically from their pay

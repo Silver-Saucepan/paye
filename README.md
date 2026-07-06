@@ -27,7 +27,6 @@ which needs to be updated for each new tax year.
 
 1. the TaxCode class
 2. the Payslip class
-3. utility function str_to_decimal
 
 ## Usage
 
