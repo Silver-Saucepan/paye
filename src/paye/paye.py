@@ -153,6 +153,11 @@ class TaxCode:
     D-Index: {self.d_index()}
     W1M1: {self.is_w1m1()}"""
 
+    def __eq__(self, other) -> bool:
+        if not isinstance(other, TaxCode):
+            return NotImplemented
+        return self.code == other.code
+
     def is_br(self) -> bool:
         """Return True if it's a basic rate code."""
         return self.prefix == 'BR'
