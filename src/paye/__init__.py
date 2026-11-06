@@ -1,3 +1,5 @@
+"""Expose the public API."""
+
 from paye.paye import (
     DescribedAmount,
     Payslip,

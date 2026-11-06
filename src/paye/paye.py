@@ -29,7 +29,7 @@ setup_fiscal_calendar('same', 4, 6)
 
 
 class DescribedAmount(NamedTuple):
-    """Attach a description to an amount"""
+    """Attach a description to an amount."""
 
     description: str
     amount: Decimal
@@ -40,7 +40,7 @@ class DescribedAmount(NamedTuple):
 
 
 def tax_rates(code: TaxCode, year: int) -> list[Decimal]:
-    """Return a list of tax rates for the year/nation"""
+    """Return a list of tax rates for the year/nation."""
     if code.nation == 'S':
         return CONSTANTS[year]['SR']
     if code.nation == 'C':
@@ -49,7 +49,7 @@ def tax_rates(code: TaxCode, year: int) -> list[Decimal]:
 
 
 def basic_rate(code: TaxCode, year: int) -> Decimal:
-    """Return the basic tax rate applicable"""
+    """Return the basic tax rate applicable."""
     if code.nation == 'S':
         rate_pointer = CONSTANTS[year]['G1']
         return CONSTANTS[year]['SR'][rate_pointer]
@@ -61,7 +61,7 @@ def basic_rate(code: TaxCode, year: int) -> Decimal:
 
 
 def additional_rate(code: TaxCode, year: int) -> Decimal:
-    """Return the additionl tax rate applicable"""
+    """Return the additionl tax rate applicable."""
     if code.nation == 'S':
         rate_pointer = CONSTANTS[year]['G1'] + 1 + code.d_index()
         return CONSTANTS[year]['SR'][rate_pointer]
@@ -113,7 +113,7 @@ class TaxCode:
     # Group 5: The basis (cumulative vs week 1/month 1)
 
     def __init__(self, code: str) -> None:
-        """Parse a tax code into its component parts and check for unsupported features
+        """Parse a tax code into its component parts and check for unsupported features.
 
         Args:
             code: The tax code as a string
@@ -141,6 +141,7 @@ class TaxCode:
                 raise ValueError(msg)
 
     def __str__(self) -> str:
+        """Representation of the tax code showing breakdown."""
         return f"""Tax code {self.code}
     Nation: {self.nation}
     Prefix: {self.prefix}
@@ -154,6 +155,7 @@ class TaxCode:
     W1M1: {self.is_w1m1()}"""
 
     def __eq__(self, other) -> bool:
+        """TaxCodes are equal if their code attributes are."""
         if not isinstance(other, TaxCode):
             return NotImplemented
         return self.code == other.code
@@ -167,7 +169,7 @@ class TaxCode:
         return self.prefix == 'NT'
 
     def d_index(self) -> int | None:
-        """The tax code indicates all income is subject to Higher or Additional rate tax
+        """The tax code indicates all income is subject to Higher or Additional rate tax.
 
         Returns:
             An integer that acts as a pointer to the relevant tax rate or None if not applicable
@@ -185,8 +187,7 @@ class TaxCode:
         return self.basis == '' or 'C' in self.basis.upper()
 
     def free_pay_w1m1(self) -> Decimal:
-        """
-        Calculate the Free Pay or Additional Pay for Week 1/Month 1.
+        """Calculate the Free Pay or Additional Pay for Week 1/Month 1.
 
         Implementation of algorithm specified in section 4.3.1 of
         "HMRC Specification for PAYE Tax Table Routines".
@@ -223,7 +224,7 @@ class TaxCode:
 
 @dataclass
 class Payslip:
-    """Payslip Model
+    """Payslip Model.
 
     Attributes required for all tax codes:
         pay_date (fiscalyear.FiscalDate): The pay date
@@ -263,6 +264,11 @@ class Payslip:
     other_deductions: list[DescribedAmount] = field(default_factory=list)
 
     def __post_init__(self) -> None:
+        """Ensure sufficient consistent data are present.
+
+        Raises:
+            ValueError: if data is inconsistent
+        """
         if self.code.is_cumulative():
             if self.pay_to_date.is_nan():
                 msg = "Pay to date is required for cumulative tax codes"
@@ -273,10 +279,12 @@ class Payslip:
 
     @property
     def year(self) -> int:
+        """The fiscal year of the payslip pay date."""
         return self.pay_date.fiscal_year
 
     @property
     def period(self) -> int:
+        """The fiscal period; 0 - 12 for monthly or 52 for weekly."""
         paye_period = os.environ.get('PAYE_PERIOD', 'monthly')
         if paye_period.lower() == 'monthly':
             return self.pay_date.fiscal_month
@@ -292,18 +300,22 @@ class Payslip:
 
     @property
     def total_gross(self) -> Decimal:
+        """The total gross pay."""
         return self.basic_pay + sum(adj.amount for adj in self.pay_adjustments)
 
     @property
     def total_deductions(self) -> Decimal:
+        """The total deductions."""
         return self.income_tax + sum(ded.amount for ded in self.other_deductions)
 
     @property
     def net_pay(self) -> Decimal:
+        """The net pay (gross minus deductions."""
         return self.total_gross - self.total_deductions
 
     @property
     def tax_to_date(self) -> Decimal:
+        """Income tax paid to date, including this payslip."""
         if self.code.is_cumulative():
             return self.tax_to_date_non_inclusive + self.income_tax  # type: ignore
         return self.income_tax
@@ -315,6 +327,7 @@ class Payslip:
         cumulative_pay_to_date: Decimal,
     ) -> Decimal:
         """Stage 2: Calculation of Taxable Pay to date (section 4.3).
+
         Note: non-lowercase variable name to follow specification
         """
         if code.is_nt() or code.d_index() is not None:
@@ -335,7 +348,8 @@ class Payslip:
         code: TaxCode,
         taxable_pay_to_date: Decimal,
     ) -> Decimal:
-        """Stage 3: Calculation of tax due to date (section 4.4)
+        """Stage 3: Calculation of tax due to date (section 4.4).
+
         Note: non-lowercase variable name to follow specification.
         """
         # 4.4.4 round down to nearest pound
@@ -419,6 +433,7 @@ class Payslip:
         pbik: Decimal | int,
     ) -> Decimal:
         """Calculate the income tax due for cumulative suffix codes and cumulative prefix k.
+
         Note: non-lowercase variable name to follow specification
         """
         # 4.2 Stage 1 Calculation of Cumulative Pay to date is delegated
@@ -439,7 +454,7 @@ class Payslip:
 
     @property
     def income_tax(self) -> Decimal:
-        """Calculate the tax due
+        """Calculate the tax due.
 
         Returns:
             Income tax due for this tax period
@@ -447,7 +462,6 @@ class Payslip:
         Raises:
             ValueError: If the HMRC constants are not available for the tax year
         """
-
         if self.total_gross.is_nan():
             return Decimal('NaN')
         if self.year not in CONSTANTS:
@@ -481,7 +495,7 @@ class Payslip:
 def _constants_from_toml(
     file_name: str = 'hmrc.toml',
 ) -> dict[int, dict]:
-    """Obtains the HMRC constants by parsing a toml file"""
+    """Obtains the HMRC constants by parsing a toml file."""
     with resources.files('paye.data').joinpath(file_name).open('rb') as f:
         data = tomllib.load(f, parse_float=Decimal)  # The percentages need to be parsed as Decimals
 

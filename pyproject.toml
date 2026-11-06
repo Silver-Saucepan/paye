@@ -57,5 +57,10 @@ line-length = 100
 quote-style = "preserve"
 
 [tool.ruff.lint]
+# Add pydocstyle linting
+extend-select = ["D"]
 # Ignore non-lowercase variable names in functions
 ignore = ["N803", "N806"]
+
+[tool.ruff.lint.pydocstyle]
+convention = "google"
