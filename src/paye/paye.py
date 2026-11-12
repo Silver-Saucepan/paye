@@ -92,7 +92,7 @@ class TaxCode:
 
     """
 
-    TAX_CODE_REGEX = r'^(?P<nation>[SC])?(?P<prefix>BR|NT|0T|D|K)?(?P<numeric>\d*)(?P<suffix>[LMNTPY])?[\s/]*(?P<basis>[\w ]*)$'
+    TAX_CODE_REGEX = r'^(?P<nation>[SC])?(?P<prefix>BR|NT|0T|D|K)?(?P<numeric>\d*)(?P<suffix>[LMNTPY])?[\s/]*(?P<basis>[\w ()]*)$'
 
     # Meaning of the groups:
     # Group 1: Indicates if Scottish (S) or Welsh (C for Cymru) rules apply
