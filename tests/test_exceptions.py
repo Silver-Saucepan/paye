@@ -1,3 +1,4 @@
+"""Test the excpetions raised in paye.py."""
 from decimal import Decimal
 
 import pytest
@@ -8,17 +9,19 @@ from paye.paye import TaxCode
 
 
 def test_invalid_code_raises():
+    """Test an invalid tax code."""
     with pytest.raises(ValueError):
         paye.TaxCode('Z1234L')
 
 
 def test_non_matching_code_raises():
+    """Test a tax code that does not fit the pattern."""
     with pytest.raises(ValueError):
         paye.TaxCode('1234L$')
 
 
 def test_no_pay_to_date_raises():
-
+    """Test absence of pay to date value in tax code that requires it."""
     with pytest.raises(ValueError):
         paye.Payslip(
             pay_date=FiscalDate(2026, 6, 1),
@@ -28,6 +31,7 @@ def test_no_pay_to_date_raises():
 
 
 def test_no_tax_to_date_raises():
+    """Test absence of tax to date value in tax code that requires it."""
     with pytest.raises(ValueError):
         paye.Payslip(
             pay_date=FiscalDate(2026, 6, 1),

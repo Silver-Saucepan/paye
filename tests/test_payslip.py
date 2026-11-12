@@ -1,3 +1,4 @@
+"""Test the Payslip class."""
 # NOTE: These tests run only for PAYE_PERIOD == 'monthly'
 # (see conftest.py)
 
@@ -9,6 +10,7 @@ from paye import DescribedAmount, Payslip, TaxCode
 
 
 def test_total_gross():
+    """Test that the total gross property is correctly calculated."""
     ps = Payslip(
         pay_date=FiscalDate(2026, 4, 6),
         basic_pay=Decimal('1156.25'),
@@ -25,6 +27,7 @@ def test_total_gross():
 
 
 def test_total_deductions():
+    """Test that the total deductions property is correctly calculated."""
     ps = Payslip(
         pay_date=FiscalDate(2026, 4, 6),
         basic_pay=Decimal('1156.25'),
@@ -45,6 +48,7 @@ def test_total_deductions():
 
 
 def test_net_pay():
+    """Test that the net pay property is correctly calculated."""
     ps = Payslip(
         pay_date=FiscalDate(2026, 4, 6),
         basic_pay=Decimal('1156.25'),
@@ -65,6 +69,7 @@ def test_net_pay():
 
 
 def test_pbiks():
+    """Test that the payrolled benefits in kind property is correctly calculated."""
     payslip = Payslip(
         pay_date=FiscalDate(2026, 4, 30),
         code=TaxCode('1257L'),
@@ -77,4 +82,5 @@ def test_pbiks():
 
 
 def test_tax_code_eq():
+    """Test the tax code equality method."""
     assert TaxCode('1257L') == TaxCode('1257L') and TaxCode('1257L') != TaxCode('BR')

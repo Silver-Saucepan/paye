@@ -1,3 +1,4 @@
+"""Run the test cases published by HMRC."""
 import os
 import zipfile
 from decimal import Decimal
@@ -34,6 +35,7 @@ HEADER_ROW = 4
     ],
 )
 def uk_test_data(request):
+    """Extract the UK test cases (excluding Scotland and Wales)."""
     with zipfile.ZipFile(ZIP_PATH, 'r') as z:
         xlsx = pd.ExcelFile(
             z.open('Tax-test-data-examples-2026-27-v1-1/2026 - 27 rest of UK tax v1.0.xlsx')
@@ -83,6 +85,7 @@ def uk_test_data(request):
     ],
 )
 def scotland_test_data(request):
+    """Extract the Scottish test cases."""
     with zipfile.ZipFile(ZIP_PATH, 'r') as z:
         xlsx = pd.ExcelFile(
             z.open('Tax-test-data-examples-2026-27-v1-1/2026 - 27 Scottish tax v1.1.xlsx')
@@ -130,6 +133,7 @@ def scotland_test_data(request):
     ],
 )
 def wales_test_data(request):
+    """Extract the Welsh test cases."""
     with zipfile.ZipFile(ZIP_PATH, 'r') as z:
         xlsx = pd.ExcelFile(
             z.open('Tax-test-data-examples-2026-27-v1-1/2026- 27 Welsh tax v1.0.xlsx')
@@ -165,6 +169,7 @@ def wales_test_data(request):
 
 
 def test_uk(uk_test_data):
+    """Run the UK test cases."""
     for test_case in uk_test_data.itertuples():
         tax_code = paye.TaxCode(test_case.code)
         if os.environ.get('PAYE_PERIOD', 'monthly').lower() == 'monthly':
@@ -185,6 +190,7 @@ def test_uk(uk_test_data):
 
 
 def test_scotland(scotland_test_data):
+    """Run the Scottish test cases."""
     for test_case in scotland_test_data.itertuples():
         tax_code = paye.TaxCode(test_case.code)
         if os.environ.get('PAYE_PERIOD', 'monthly').lower() == 'monthly':
@@ -205,6 +211,7 @@ def test_scotland(scotland_test_data):
 
 
 def test_wales(wales_test_data):
+    """Run the Welsh test cases."""
     for test_case in wales_test_data.itertuples():
         tax_code = paye.TaxCode(test_case.code)
         if os.environ.get('PAYE_PERIOD', 'monthly').lower() == 'monthly':

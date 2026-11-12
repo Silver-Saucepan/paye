@@ -1,3 +1,4 @@
+"""Ignore test_payslip module if PAYE_PERIOD is not monthly."""
 import os
 
 collect_ignore = []
